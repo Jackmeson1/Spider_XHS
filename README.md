@@ -67,6 +67,13 @@ To obtain your cookie:
 python main.py
 ```
 
+### Command Line Interface
+Install dependencies and run:
+```bash
+python cli.py crawl --cookie "<your_cookie>" --note-id "<note_id>"
+```
+See `python cli.py --help` for all commands.
+
 ### Search and Download
 ```bash
 python main.py --query "keyword" --num 5 --save-choice all --excel-name output
