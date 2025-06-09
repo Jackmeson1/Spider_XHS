@@ -39,10 +39,9 @@ def get_common_headers():
     }
 
 
-def splice_str(api, params):
-    url = api + '?'
-    for key, value in params.items():
-        if value is None:
-            value = ''
-        url += key + '=' + value + '&'
-    return url[:-1]
+def splice_str(api: str, params: dict) -> str:
+    """Assemble a query string from parameters."""
+    query = "&".join(
+        f"{key}={'' if value is None else value}" for key, value in params.items()
+    )
+    return f"{api}?{query}"

@@ -100,7 +100,7 @@ def handle_note_info(data):
             pass
     if note_type == '视频':
         video_cover = image_list[0]
-        video_addr = 'https://sns-video-bd.xhscdn.com/' + data['note_card']['video']['consumer']['origin_video_key']
+        video_addr = f"https://sns-video-bd.xhscdn.com/{data['note_card']['video']['consumer']['origin_video_key']}"
         # success, msg, video_addr = XHS_Apis.get_note_no_water_video(note_id)
     else:
         video_cover = None
@@ -198,7 +198,7 @@ def save_to_xlsx(datas, file_path, type='note'):
     wb.save(file_path)
     logger.info(f'数据保存至 {file_path}')
 
-def download_media(path, name, url, type, failed: list | None = None) -> bool:
+def download_media(path: str, name: str, url: str, type: str, failed: list | None = None) -> bool:
     """Download an image or video file. Return True on success."""
     try:
         if type == 'image':
@@ -220,7 +220,7 @@ def download_media(path, name, url, type, failed: list | None = None) -> bool:
 
 def transcode_to_h264(path: str) -> bool:
     """Transcode a video to H.264 using ffmpeg."""
-    out_path = os.path.splitext(path)[0] + "_h264.mp4"
+    out_path = f"{os.path.splitext(path)[0]}_h264.mp4"
     cmd = [
         "ffmpeg",
         "-i",
