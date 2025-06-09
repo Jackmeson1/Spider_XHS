@@ -3,7 +3,8 @@ import os
 from loguru import logger
 from apis.xhs_pc_apis import XHS_Apis
 from xhs_utils.common_util import init
-from xhs_utils.data_util import handle_note_info, download_note, save_to_xlsx
+from xhs_utils.data_util import handle_note_info, download_note, save_to_xlsx, save_failed_list, retry_failed_downloads
+from tqdm import tqdm
 
 
 class Data_Spider():
@@ -30,7 +31,7 @@ class Data_Spider():
         logger.info(f'爬取笔记信息 {note_url}: {success}, msg: {msg}')
         return success, msg, note_info
 
-    def spider_some_note(self, notes: list, cookies_str: str, base_path: dict, save_choice: str, excel_name: str = '', proxies=None):
+    def spider_some_note(self, notes: list, cookies_str: str, base_path: dict, save_choice: str, excel_name: str = '', proxies=None, retry_failed=False):
         """
         爬取一些笔记的信息
         :param notes:
@@ -41,16 +42,20 @@ class Data_Spider():
         if (save_choice == 'all' or save_choice == 'excel') and excel_name == '':
             raise ValueError('excel_name 不能为空')
         note_list = []
-        for note_url in notes:
+        for note_url in tqdm(notes, desc='Fetch notes'):
             success, msg, note_info = self.spider_note(note_url, cookies_str, proxies)
             if note_info is not None and success:
                 note_list.append(note_info)
-        for note_info in note_list:
+        for note_info in tqdm(note_list, desc='Download media'):
             if save_choice == 'all' or 'media' in save_choice:
                 download_note(note_info, base_path['media'], save_choice)
         if save_choice == 'all' or save_choice == 'excel':
             file_path = os.path.abspath(os.path.join(base_path['excel'], f'{excel_name}.xlsx'))
             save_to_xlsx(note_list, file_path)
+        failed_file = os.path.join(base_path['media'], 'failed.txt')
+        save_failed_list(failed_file)
+        if retry_failed:
+            retry_failed_downloads(failed_file)
 
 
     def spider_user_all_note(self, user_url: str, cookies_str: str, base_path: dict, save_choice: str, excel_name: str = '', proxies=None):
@@ -66,7 +71,7 @@ class Data_Spider():
             success, msg, all_note_info = self.xhs_apis.get_user_all_notes(user_url, cookies_str, proxies)
             if success:
                 logger.info(f'用户 {user_url} 作品数量: {len(all_note_info)}')
-                for simple_note_info in all_note_info:
+                for simple_note_info in tqdm(all_note_info, desc='Collect note urls'):
                     note_url = f"https://www.xiaohongshu.com/explore/{simple_note_info['note_id']}?xsec_token={simple_note_info['xsec_token']}"
                     note_list.append(note_url)
             if save_choice == 'all' or save_choice == 'excel':
@@ -98,7 +103,7 @@ class Data_Spider():
             if success:
                 notes = list(filter(lambda x: x['model_type'] == "note", notes))
                 logger.info(f'搜索关键词 {query} 笔记数量: {len(notes)}')
-                for note in notes:
+                for note in tqdm(notes, desc='Collect note urls'):
                     note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
                     note_list.append(note_url)
             if save_choice == 'all' or save_choice == 'excel':

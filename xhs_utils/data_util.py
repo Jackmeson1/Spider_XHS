@@ -6,6 +6,10 @@ import openpyxl
 import requests
 from loguru import logger
 from retry import retry
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
+
+failed_downloads = []
 
 
 def norm_str(str):
@@ -192,18 +196,22 @@ def save_to_xlsx(datas, file_path, type='note'):
     logger.info(f'数据保存至 {file_path}')
 
 def download_media(path, name, url, type):
-    if type == 'image':
-        content = requests.get(url).content
-        with open(path + '/' + name + '.jpg', mode="wb") as f:
-            f.write(content)
-    elif type == 'video':
-        res = requests.get(url, stream=True)
-        size = 0
-        chunk_size = 1024 * 1024
-        with open(path + '/' + name + '.mp4', mode="wb") as f:
-            for data in res.iter_content(chunk_size=chunk_size):
-                f.write(data)
-                size += len(data)
+    try:
+        if type == 'image':
+            content = requests.get(url).content
+            with open(os.path.join(path, name + '.jpg'), mode="wb") as f:
+                f.write(content)
+        elif type == 'video':
+            res = requests.get(url, stream=True)
+            chunk_size = 1024 * 1024
+            with open(os.path.join(path, name + '.mp4'), mode="wb") as f:
+                for data in res.iter_content(chunk_size=chunk_size):
+                    f.write(data)
+        return True
+    except Exception as e:
+        logger.error(f'下载失败 {url}: {e}')
+        failed_downloads.append((path, name, url, type))
+        return False
 
 def save_user_detail(user, path):
     with open(f'{path}/detail.txt', mode="w", encoding="utf-8") as f:
@@ -247,7 +255,7 @@ def save_note_detail(note, path):
 
 
 @retry(tries=3, delay=1)
-def download_note(note_info, path, save_choice):
+def download_note(note_info, path, save_choice, workers=5):
     note_id = note_info['note_id']
     user_id = note_info['user_id']
     title = note_info['title']
@@ -263,8 +271,10 @@ def download_note(note_info, path, save_choice):
     note_type = note_info['note_type']
     save_note_detail(note_info, save_path)
     if note_type == '图集' and save_choice in ['media', 'media-image', 'all']:
-        for img_index, img_url in enumerate(note_info['image_list']):
-            download_media(save_path, f'image_{img_index}', img_url, 'image')
+        image_list = note_info['image_list']
+        tasks = [(save_path, f'image_{idx}', url, 'image') for idx, url in enumerate(image_list)]
+        with ThreadPoolExecutor(max_workers=min(workers, len(tasks))) as executor:
+            list(tqdm(executor.map(lambda args: download_media(*args), tasks), total=len(tasks), desc=f'Downloading images of {note_id}', leave=False))
     elif note_type == '视频' and save_choice in ['media', 'media-video', 'all']:
         download_media(save_path, 'cover', note_info['video_cover'], 'image')
         download_media(save_path, 'video', note_info['video_addr'], 'video')
@@ -274,3 +284,27 @@ def download_note(note_info, path, save_choice):
 def check_and_create_path(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def save_failed_list(file_path):
+    if not failed_downloads:
+        return
+    with open(file_path, 'w', encoding='utf-8') as f:
+        for item in failed_downloads:
+            f.write(json.dumps({'path': item[0], 'name': item[1], 'url': item[2], 'type': item[3]}, ensure_ascii=False) + '\n')
+    logger.info(f'失败记录已保存至 {file_path}')
+
+
+def retry_failed_downloads(file_path, workers=5):
+    if not os.path.exists(file_path):
+        logger.info('没有失败记录')
+        return
+    with open(file_path, 'r', encoding='utf-8') as f:
+        tasks = [json.loads(i.strip()) for i in f if i.strip()]
+    if not tasks:
+        logger.info('没有需要重试的下载')
+        return
+    failed_downloads.clear()
+    with ThreadPoolExecutor(max_workers=min(workers, len(tasks))) as executor:
+        list(tqdm(executor.map(lambda item: download_media(item['path'], item['name'], item['url'], item['type']), tasks), total=len(tasks), desc='Retrying failed downloads'))
+    save_failed_list(file_path)
