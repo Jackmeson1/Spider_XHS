@@ -8,6 +8,8 @@ import openpyxl
 import requests
 from loguru import logger
 from retry import retry
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def norm_str(text: str) -> str:
@@ -196,19 +198,25 @@ def save_to_xlsx(datas, file_path, type='note'):
     wb.save(file_path)
     logger.info(f'数据保存至 {file_path}')
 
-def download_media(path, name, url, type):
-    if type == 'image':
-        content = requests.get(url).content
-        with open(path + '/' + name + '.jpg', mode="wb") as f:
-            f.write(content)
-    elif type == 'video':
-        res = requests.get(url, stream=True)
-        size = 0
-        chunk_size = 1024 * 1024
-        with open(path + '/' + name + '.mp4', mode="wb") as f:
-            for data in res.iter_content(chunk_size=chunk_size):
-                f.write(data)
-                size += len(data)
+def download_media(path, name, url, type, failed: list | None = None) -> bool:
+    """Download an image or video file. Return True on success."""
+    try:
+        if type == 'image':
+            content = requests.get(url).content
+            with open(f"{path}/{name}.jpg", "wb") as f:
+                f.write(content)
+        elif type == 'video':
+            res = requests.get(url, stream=True)
+            chunk_size = 1024 * 1024
+            with open(f"{path}/{name}.mp4", "wb") as f:
+                for data in res.iter_content(chunk_size=chunk_size):
+                    f.write(data)
+        return True
+    except Exception as e:
+        logger.error(f"Download failed for {url}: {e}")
+        if failed is not None:
+            failed.append({"path": path, "name": name, "url": url, "type": type})
+        return False
 
 def transcode_to_h264(path: str) -> bool:
     """Transcode a video to H.264 using ffmpeg."""
@@ -277,7 +285,7 @@ def save_note_detail(note, path):
 
 
 @retry(tries=3, delay=1)
-def download_note(note_info, path, save_choice, transcode=False):
+def download_note(note_info, path, save_choice, transcode=False, failed: list | None = None):
     note_id = note_info['note_id']
     user_id = note_info['user_id']
     title = norm_str(note_info['title'])
@@ -288,11 +296,16 @@ def download_note(note_info, path, save_choice, transcode=False):
 
     # flat mode: directly store media under base path
     if save_choice == 'image-flat' and note_type == '图集':
-        for img_index, img_url in enumerate(note_info['image_list']):
-            download_media(path, f"{note_id}_{img_index}", img_url, 'image')
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            futures = {
+                ex.submit(download_media, path, f"{note_id}_{idx}", url, 'image', failed): url
+                for idx, url in enumerate(note_info['image_list'])
+            }
+            for _ in tqdm(as_completed(futures), total=len(futures), desc="images"):
+                pass
         return path
     if save_choice == 'video-flat' and note_type == '视频':
-        download_media(path, note_id, note_info['video_addr'], 'video')
+        download_media(path, note_id, note_info['video_addr'], 'video', failed)
         if transcode:
             transcode_to_h264(f"{path}/{note_id}.mp4")
         return path
@@ -303,11 +316,16 @@ def download_note(note_info, path, save_choice, transcode=False):
         f.write(json.dumps(note_info) + '\n')
     save_note_detail(note_info, save_path)
     if note_type == '图集' and save_choice in ['media', 'media-image', 'all']:
-        for img_index, img_url in enumerate(note_info['image_list']):
-            download_media(save_path, f'image_{img_index}', img_url, 'image')
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            futures = {
+                ex.submit(download_media, save_path, f'image_{idx}', url, 'image', failed): url
+                for idx, url in enumerate(note_info['image_list'])
+            }
+            for _ in tqdm(as_completed(futures), total=len(futures), desc="images"):
+                pass
     elif note_type == '视频' and save_choice in ['media', 'media-video', 'all']:
-        download_media(save_path, 'cover', note_info['video_cover'], 'image')
-        download_media(save_path, 'video', note_info['video_addr'], 'video')
+        download_media(save_path, 'cover', note_info['video_cover'], 'image', failed)
+        download_media(save_path, 'video', note_info['video_addr'], 'video', failed)
         if transcode:
             transcode_to_h264(f"{save_path}/video.mp4")
     return save_path
@@ -316,3 +334,21 @@ def download_note(note_info, path, save_choice, transcode=False):
 def check_and_create_path(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def save_failed(failed: list, file_path: str = "failed.txt"):
+    """Append failed download records to a file."""
+    if not failed:
+        return
+    with open(file_path, "a", encoding="utf-8") as f:
+        for item in failed:
+            f.write(json.dumps(item, ensure_ascii=False) + "\n")
+    logger.info(f"Saved {len(failed)} failed downloads to {file_path}")
+
+
+def retry_failed(file_path: str) -> list:
+    """Load failed download records from a file."""
+    if not os.path.exists(file_path):
+        return []
+    with open(file_path, "r", encoding="utf-8") as f:
+        return [json.loads(line.strip()) for line in f if line.strip()]

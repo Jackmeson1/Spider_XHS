@@ -1,9 +1,18 @@
 import json
 import os
+import argparse
 from loguru import logger
 from apis.xhs_pc_apis import XHS_Apis
 from xhs_utils.common_util import init
-from xhs_utils.data_util import handle_note_info, download_note, save_to_xlsx
+from xhs_utils.data_util import (
+    handle_note_info,
+    download_note,
+    save_to_xlsx,
+    save_failed,
+    retry_failed,
+    download_media,
+)
+from tqdm import tqdm
 
 
 class Data_Spider():
@@ -41,16 +50,18 @@ class Data_Spider():
         if (save_choice == 'all' or save_choice == 'excel') and excel_name == '':
             raise ValueError('excel_name 不能为空')
         note_list = []
-        for note_url in notes:
+        for note_url in tqdm(notes, desc="notes"):
             success, msg, note_info = self.spider_note(note_url, cookies_str, proxies)
             if note_info is not None and success:
                 note_list.append(note_info)
-        for note_info in note_list:
+        failed = []
+        for note_info in tqdm(note_list, desc="download"):
             if save_choice == 'all' or 'media' in save_choice or 'flat' in save_choice:
-                download_note(note_info, base_path['media'], save_choice, transcode)
+                download_note(note_info, base_path['media'], save_choice, transcode, failed)
         if save_choice == 'all' or save_choice == 'excel':
             file_path = os.path.abspath(os.path.join(base_path['excel'], f'{excel_name}.xlsx'))
             save_to_xlsx(note_list, file_path)
+        save_failed(failed)
 
 
     def spider_user_all_note(self, user_url: str, cookies_str: str, base_path: dict, save_choice: str, excel_name: str = '', proxies=None, transcode: bool = False):
@@ -66,7 +77,7 @@ class Data_Spider():
             success, msg, all_note_info = self.xhs_apis.get_user_all_notes(user_url, cookies_str, proxies)
             if success:
                 logger.info(f'用户 {user_url} 作品数量: {len(all_note_info)}')
-                for simple_note_info in all_note_info:
+                for simple_note_info in tqdm(all_note_info, desc="notes"):
                     note_url = f"https://www.xiaohongshu.com/explore/{simple_note_info['note_id']}?xsec_token={simple_note_info['xsec_token']}"
                     note_list.append(note_url)
             if save_choice == 'all' or save_choice == 'excel':
@@ -98,7 +109,7 @@ class Data_Spider():
             if success:
                 notes = list(filter(lambda x: x['model_type'] == "note", notes))
                 logger.info(f'搜索关键词 {query} 笔记数量: {len(notes)}')
-                for note in notes:
+                for note in tqdm(notes, desc="notes"):
                     note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
                     note_list.append(note_url)
             if save_choice == 'all' or save_choice == 'excel':
@@ -110,14 +121,8 @@ class Data_Spider():
         logger.info(f'搜索关键词 {query} 笔记: {success}, msg: {msg}')
         return note_list, success, msg
 
-if __name__ == '__main__':
-    """
-        此文件为爬虫的入口文件，可以直接运行
-        apis/xhs_pc_apis.py 为爬虫的api文件，包含小红书的全部数据接口，可以继续封装
-        apis/xhs_creator_apis.py 为小红书创作者中心的api文件
-        感谢star和follow
-    """
-
+def run_examples():
+    """Demonstrate typical usage of the spider."""
     cookies_str, base_path = init()
     data_spider = Data_Spider()
     """
@@ -155,3 +160,56 @@ if __name__ == '__main__':
     #     "longitude": 116.4207
     # }
     data_spider.spider_some_search_note(query, query_num, cookies_str, base_path, 'all', sort_type_choice, note_type, note_time, note_range, pos_distance, geo=None)
+
+
+def cli():
+    parser = argparse.ArgumentParser(description="Spider XHS")
+    parser.add_argument("--notes", nargs="*", help="note urls")
+    parser.add_argument("--user", help="user url")
+    parser.add_argument("--query", help="search keyword")
+    parser.add_argument("--num", type=int, default=10, help="search count")
+    parser.add_argument("--save-choice", default="all", help="save choice")
+    parser.add_argument("--excel-name", default="", help="excel file name")
+    parser.add_argument("--sort", type=int, default=0, help="sort type")
+    parser.add_argument("--note-type", type=int, default=0)
+    parser.add_argument("--note-time", type=int, default=0)
+    parser.add_argument("--note-range", type=int, default=0)
+    parser.add_argument("--pos-distance", type=int, default=0)
+    parser.add_argument("--transcode", action="store_true")
+    parser.add_argument("--retry-failed", action="store_true", help="retry failed downloads")
+    args = parser.parse_args()
+
+    cookies_str, base_path = init()
+    spider = Data_Spider()
+
+    if args.retry_failed:
+        records = retry_failed("failed.txt")
+        for item in tqdm(records, desc="retry"):
+            download_media(item["path"], item["name"], item["url"], item["type"])
+        return
+
+    if args.notes:
+        spider.spider_some_note(args.notes, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
+    if args.user:
+        spider.spider_user_all_note(args.user, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
+    if args.query:
+        spider.spider_some_search_note(
+            args.query,
+            args.num,
+            cookies_str,
+            base_path,
+            args.save_choice,
+            args.sort,
+            args.note_type,
+            args.note_time,
+            args.note_range,
+            args.pos_distance,
+            geo=None,
+            excel_name=args.excel_name,
+            proxies=None,
+            transcode=args.transcode,
+        )
+
+
+if __name__ == '__main__':
+    cli()
