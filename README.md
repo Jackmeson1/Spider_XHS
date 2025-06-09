@@ -83,6 +83,12 @@ npm install
 python main.py
 ```
 
+### CLI 示例
+通过命令行参数控制爬取行为，例如搜索笔记并下载：
+```bash
+python main.py --query "榴莲" --num 5 --save-choice all --excel-name 榴莲 --transcode
+```
+
 ### 保存选项 (save_choice)
 - `all`：保存excel和媒体文件
 - `excel`：仅保存excel
