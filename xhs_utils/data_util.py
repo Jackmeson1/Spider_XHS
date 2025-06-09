@@ -2,15 +2,19 @@ import json
 import os
 import re
 import time
+import unicodedata
 import openpyxl
 import requests
 from loguru import logger
 from retry import retry
 
 
-def norm_str(str):
-    new_str = re.sub(r"|[\\/:*?\"<>| ]+", "", str).replace('\n', '').replace('\r', '')
-    return new_str
+def norm_str(text: str) -> str:
+    """Normalize a string for safe filesystem usage."""
+    text = unicodedata.normalize("NFKD", text)
+    text = re.sub(r'[\\/:*?"<>|]', '', text)
+    text = text.replace('\n', '').replace('\r', '').strip()
+    return text[:50]
 
 def norm_text(text):
     ILLEGAL_CHARACTERS_RE = re.compile(r'[\000-\010]|[\013-\014]|[\016-\037]')
@@ -250,10 +254,8 @@ def save_note_detail(note, path):
 def download_note(note_info, path, save_choice):
     note_id = note_info['note_id']
     user_id = note_info['user_id']
-    title = note_info['title']
-    title = norm_str(title)[:40]
-    nickname = note_info['nickname']
-    nickname = norm_str(nickname)[:20]
+    title = norm_str(note_info['title'])
+    nickname = norm_str(note_info['nickname'])
     if title.strip() == '':
         title = f'无标题'
     note_type = note_info['note_type']
