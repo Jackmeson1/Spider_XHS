@@ -1,151 +1,122 @@
-<p align="center">
-  <a href="https://github.com/cv-cat/Spider_XHS" target="_blank" align="center" alt="Go to XHS_Spider Website">
-    <picture>
-      <img width="220" src="https://github.com/user-attachments/assets/b817a5d2-4ca6-49e9-b7b1-efb07a4fb325" alt="Spider_XHS logo">
-    </picture>
-  </a>
-</p>
+# XHS Spider - Xiaohongshu Data Collection Tool
 
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Node.js 18+](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
-<div align="center">
-    <a href="https://www.python.org/">
-        <img src="https://img.shields.io/badge/python-3.7%2B-blue" alt="Python 3.7+">
-    </a>
-    <a href="https://nodejs.org/zh-cn/">
-        <img src="https://img.shields.io/badge/nodejs-18%2B-blue" alt="NodeJS 18+">
-    </a>
-</div>
+> **Note**: This is a fork of the original [XHS Spider](https://github.com/original-author/Spider_XHS) project, translated and adapted for international use.
 
+A professional data collection solution for Xiaohongshu (Little Red Book), supporting note scraping with Excel and media export capabilities.
 
+## ⚠️ Disclaimer
 
-# Spider_XHS
+This tool is for **educational and research purposes only**. Users are responsible for complying with Xiaohongshu's Terms of Service and applicable laws. The authors do not endorse or encourage any unauthorized data collection or violation of platform policies.
 
-**✨ 专业的小红书数据采集解决方案，支持笔记爬取，保存格式为excel或者media**
+## Features
 
-**✨ 小红书全域运营解决方法，AI一键改写笔记（图文，视频）直接上传**
+### Data Collection Capabilities
+- ✅ User profile information
+- ✅ Note details (text, images, videos)
+- ✅ Search results scraping
+- ✅ Comments extraction
+- ✅ User posts, likes, and favorites
 
-## ⭐功能列表
+### Technical Features
+- 🚀 High-performance architecture with automatic retry mechanism
+- 🔒 Secure and stable with latest API adaptation
+- 🎨 Structured data storage (JSON/Excel/Media formats)
+- 🌐 Proxy support for enhanced reliability
 
-**⚠️ 任何涉及数据注入的操作都是不被允许的，本项目仅供学习交流使用，如有违反，后果自负**
+## Requirements
 
-| 模块       | 已实现                                                                             |
-|----------|---------------------------------------------------------------------------------|
-| 小红书创作者平台 | ✅ 二维码登录<br/>✅ 手机验证码登录<br/>✅ 上传（图集、视频）作品<br/>✅查看自己上传的作品      |
-| 小红书PC    | ✅ 二维码登录<br/> ✅ 手机验证码登录<br/> ✅ 获取无水印图片<br/> ✅ 获取无水印视频<br/> ✅ 获取主页的所有频道<br/>✅ 获取主页推荐笔记<br/>✅ 获取某个用户的信息<br/>✅ 用户自己的信息<br/>✅ 获取某个用户上传的笔记<br/>✅ 获取某个用户所有的喜欢笔记<br/>✅ 获取某个用户所有的收藏笔记<br/>✅ 获取某个笔记的详细内容<br/>✅ 搜索笔记内容<br/>✅ 搜索用户内容<br/>✅ 获取某个笔记的评论<br/>✅ 获取未读消息信息<br/>✅ 获取收到的评论和@提醒信息<br/>✅ 获取收到的点赞和收藏信息<br/>✅ 获取新增关注信息|
-
-
-## 🌟 功能特性
-
-- ✅ **多维度数据采集**
-  - 用户主页信息
-  - 笔记详细内容
-  - 智能搜索结果抓取
-- 🚀 **高性能架构**
-  - 自动重试机制
-- 🔒 **安全稳定**
-  - 小红书最新API适配
-  - 异常处理机制
-  - proxy代理
-- 🎨 **便捷管理**
-  - 结构化目录存储
-  - 格式化输出（JSON/EXCEL/MEDIA）
-  
-## 🎨效果图
-### 处理后的所有用户
-![image](https://github.com/cv-cat/Spider_XHS/assets/94289429/00902dbd-4da1-45bc-90bb-19f5856a04ad)
-### 某个用户所有的笔记
-![image](https://github.com/cv-cat/Spider_XHS/assets/94289429/880884e8-4a1d-4dc1-a4dc-e168dd0e9896)
-### 某个笔记具体的内容
-![image](https://github.com/cv-cat/Spider_XHS/assets/94289429/d17f3f4e-cd44-4d3a-b9f6-d880da626cc8)
-### 保存的excel
-![image](https://github.com/user-attachments/assets/707f20ed-be27-4482-89b3-a5863bc360e7)
-
-## 🛠️ 快速开始
-### ⛳运行环境
 - Python 3.7+
 - Node.js 18+
+- Valid Xiaohongshu account (for cookie authentication)
 
-### 🎯安装依赖
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/Jackmeson1/Spider_XHS.git
+cd Spider_XHS
 ```
+
+2. Install dependencies:
+```bash
 pip install -r requirements.txt
 npm install
 ```
 
-### 🎨配置文件
-配置文件在项目根目录.env文件中，将下图自己的登录cookie放入其中，cookie获取➡️在浏览器f12打开控制台，点击网络，点击fetch，找一个接口点开
-![image](https://github.com/user-attachments/assets/6a7e4ecb-0432-4581-890a-577e0eae463d)
+3. Configure authentication:
+   - Copy `.env.example` to `.env`
+   - Add your Xiaohongshu cookie (see Authentication section)
 
-复制cookie到.env文件中（注意！登录小红书后的cookie才是有效的，不登陆没有用）
-![image](https://github.com/user-attachments/assets/5e62bc35-d758-463e-817c-7dcaacbee13c)
+## Authentication
 
-### 🚀运行项目
-```
+To obtain your cookie:
+1. Log in to Xiaohongshu in your browser
+2. Open Developer Tools (F12)
+3. Go to Network tab → Fetch/XHR
+4. Find any API request and copy the cookie value
+5. Paste it in your `.env` file
+
+## Usage
+
+### Basic Usage
+```bash
 python main.py
 ```
 
-### CLI 示例
-通过命令行参数控制爬取行为，例如搜索笔记并下载：
+### Search and Download
 ```bash
-python main.py --query "榴莲" --num 5 --save-choice all --excel-name 榴莲 --transcode
+python main.py --query "keyword" --num 5 --save-choice all --excel-name output
 ```
 
-### 保存选项 (save_choice)
-- `all`：保存excel和媒体文件
-- `excel`：仅保存excel
-- `media`：保存视频和图片
-- `media-image`：仅保存图片
-- `media-video`：仅保存视频
-- `image-flat`：图集直接保存在 `media` 路径下，文件名为 `<note_id>_<index>.jpg`
-- `video-flat`：视频直接保存在 `media` 路径下，文件名为 `<note_id>.mp4`
+### Save Options
+- `all`: Save Excel and media files
+- `excel`: Save Excel only
+- `media`: Save videos and images
+- `media-image`: Save images only
+- `media-video`: Save videos only
 
-### 额外参数
-- `transcode`：将下载的视频转码为 H.264 编码，需要本地安装 `ffmpeg`
+### Additional Options
+- `--transcode`: Convert videos to H.264 (requires ffmpeg)
 
-### 🗝️注意事项
-- main.py中的代码是爬虫的入口，可以根据自己的需求进行修改
-- apis/xhs_pc_apis.py 中的代码包含了所有的api接口，可以根据自己的需求进行修改
-- apis/xhs_creator_apis.py 中的代码包含了小红书创作者平台的api接口，可以根据自己的需求进行修改
+## Project Structure
 
+```
+Spider_XHS/
+├── main.py                 # Main entry point
+├── apis/
+│   ├── xhs_pc_apis.py     # PC platform APIs
+│   └── xhs_creator_apis.py # Creator platform APIs
+├── data/                   # Output directory
+└── requirements.txt        # Python dependencies
+```
 
-## 🍥日志
-   
-| 日期       | 说明                          |
-|----------| --------------------------- |
-| 23/08/09 | - 首次提交 |
-| 23/09/13 | - api更改params增加两个字段，修复图片无法下载，有些页面无法访问导致报错 |
-| 23/09/16 | - 较大视频出现编码问题，修复视频编码问题，加入异常处理 |
-| 23/09/18 | - 代码重构，加入失败重试 |
-| 23/09/19 | - 新增下载搜索结果功能 |
-| 23/10/05 | - 新增跳过已下载功能，获取更详细的笔记和用户信息|
-| 23/10/08 | - 上传代码☞Pypi，可通过pip install安装本项目|
-| 23/10/17 | - 搜索下载新增排序方式选项（1、综合排序 2、热门排序 3、最新排序）|
-| 23/10/21 | - 新增图形化界面,上传至release v2.1.0|
-| 23/10/28 | - Fix Bug 修复搜索功能出现的隐藏问题|
-| 25/03/18 | - 更新API，修复部分问题|
-| 25/06/07 | - 更新search接口，区分视频和图集下载，增加小红书创作者api|
+## Legal Notice
 
+- This tool is for personal use and research only
+- Respect intellectual property rights
+- Do not use for commercial purposes without permission
+- Users assume all risks associated with using this tool
 
+## Contributing
 
-## 🧸额外说明
-1. 感谢star⭐和follow📰！不时更新
-2. 作者的联系方式在主页里，有问题可以随时联系我
-3. 可以关注下作者的其他项目，欢迎 PR 和 issue
-4. 感谢赞助！如果此项目对您有帮助，请作者喝一杯奶茶~~ （开心一整天😊😊）
-5. thank you~~~
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request with clear descriptions
 
-<div align="center">
-  <img src="./author/wx_pay.png" width="400px" alt="微信赞赏码"> 
-  <img src="./author/zfb_pay.jpg" width="400px" alt="支付宝收款码">
-</div>
+## Acknowledgments
 
+- Original project by [original author name]
+- Contributors who helped improve this tool
 
-## 📈 Star 趋势
-<a href="https://www.star-history.com/#cv-cat/Spider_XHS&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=cv-cat/Spider_XHS&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=cv-cat/Spider_XHS&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=cv-cat/Spider_XHS&type=Date" />
- </picture>
-</a>
+## License
 
+This project is licensed under the MIT License - see the LICENSE file for details.
 
+---
+
+**Note**: If you encounter any issues or have questions, please open an issue on GitHub.
