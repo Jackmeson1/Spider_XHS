@@ -83,6 +83,15 @@ npm install
 python main.py
 ```
 
+### 保存选项 (save_choice)
+- `all`：保存excel和媒体文件
+- `excel`：仅保存excel
+- `media`：保存视频和图片
+- `media-image`：仅保存图片
+- `media-video`：仅保存视频
+- `image-flat`：图集直接保存在 `media` 路径下，文件名为 `<note_id>_<index>.jpg`
+- `video-flat`：视频直接保存在 `media` 路径下，文件名为 `<note_id>.mp4`
+
 ### 🗝️注意事项
 - main.py中的代码是爬虫的入口，可以根据自己的需求进行修改
 - apis/xhs_pc_apis.py 中的代码包含了所有的api接口，可以根据自己的需求进行修改
