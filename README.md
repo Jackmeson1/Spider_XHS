@@ -79,8 +79,12 @@ npm install
 ![image](https://github.com/user-attachments/assets/5e62bc35-d758-463e-817c-7dcaacbee13c)
 
 ### 🚀运行项目
+```bash
+python main.py --help
 ```
-python main.py
+例如搜索并保存前10条结果：
+```bash
+python main.py search --keyword 榴莲 --count 10 --save-choice all
 ```
 
 ### 🗝️注意事项
