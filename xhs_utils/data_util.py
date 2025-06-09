@@ -2,6 +2,7 @@ import json
 import os
 import re
 import time
+import subprocess
 import openpyxl
 import requests
 from loguru import logger
@@ -205,6 +206,34 @@ def download_media(path, name, url, type):
                 f.write(data)
                 size += len(data)
 
+def transcode_to_h264(video_path):
+    """Transcode a video to H.264 format using ffmpeg."""
+    new_path = os.path.splitext(video_path)[0] + "_h264.mp4"
+    cmd = [
+        "ffmpeg",
+        "-i",
+        video_path,
+        "-c:v",
+        "libx264",
+        "-c:a",
+        "copy",
+        "-y",
+        new_path,
+    ]
+    try:
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode == 0 and os.path.exists(new_path):
+            os.remove(video_path)
+            os.rename(new_path, video_path)
+            logger.info(f"视频转码完成 {video_path}")
+            return True
+    except Exception as e:
+        logger.error(f"视频转码异常 {e}")
+    if os.path.exists(new_path):
+        os.remove(new_path)
+    logger.error(f"视频转码失败 {video_path}")
+    return False
+
 def save_user_detail(user, path):
     with open(f'{path}/detail.txt', mode="w", encoding="utf-8") as f:
         # 逐行输出到txt里
@@ -247,7 +276,7 @@ def save_note_detail(note, path):
 
 
 @retry(tries=3, delay=1)
-def download_note(note_info, path, save_choice):
+def download_note(note_info, path, save_choice, transcode=False):
     note_id = note_info['note_id']
     user_id = note_info['user_id']
     title = note_info['title']
@@ -268,6 +297,9 @@ def download_note(note_info, path, save_choice):
     elif note_type == '视频' and save_choice in ['media', 'media-video', 'all']:
         download_media(save_path, 'cover', note_info['video_cover'], 'image')
         download_media(save_path, 'video', note_info['video_addr'], 'video')
+        if transcode:
+            video_file = os.path.join(save_path, 'video.mp4')
+            transcode_to_h264(video_file)
     return save_path
 
 
