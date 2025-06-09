@@ -92,6 +92,9 @@ python main.py
 - `image-flat`：图集直接保存在 `media` 路径下，文件名为 `<note_id>_<index>.jpg`
 - `video-flat`：视频直接保存在 `media` 路径下，文件名为 `<note_id>.mp4`
 
+### 额外参数
+- `transcode`：将下载的视频转码为 H.264 编码，需要本地安装 `ffmpeg`
+
 ### 🗝️注意事项
 - main.py中的代码是爬虫的入口，可以根据自己的需求进行修改
 - apis/xhs_pc_apis.py 中的代码包含了所有的api接口，可以根据自己的需求进行修改

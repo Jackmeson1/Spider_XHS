@@ -3,6 +3,7 @@ import os
 import re
 import time
 import unicodedata
+import subprocess
 import openpyxl
 import requests
 from loguru import logger
@@ -209,6 +210,31 @@ def download_media(path, name, url, type):
                 f.write(data)
                 size += len(data)
 
+def transcode_to_h264(path: str) -> bool:
+    """Transcode a video to H.264 using ffmpeg."""
+    out_path = os.path.splitext(path)[0] + "_h264.mp4"
+    cmd = [
+        "ffmpeg",
+        "-i",
+        path,
+        "-c:v",
+        "libx264",
+        "-c:a",
+        "copy",
+        "-y",
+        out_path,
+    ]
+    try:
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        os.remove(path)
+        os.rename(out_path, path)
+        return True
+    except Exception as e:
+        logger.error(f"Transcode failed for {path}: {e}")
+        if os.path.exists(out_path):
+            os.remove(out_path)
+        return False
+
 def save_user_detail(user, path):
     with open(f'{path}/detail.txt', mode="w", encoding="utf-8") as f:
         # 逐行输出到txt里
@@ -251,7 +277,7 @@ def save_note_detail(note, path):
 
 
 @retry(tries=3, delay=1)
-def download_note(note_info, path, save_choice):
+def download_note(note_info, path, save_choice, transcode=False):
     note_id = note_info['note_id']
     user_id = note_info['user_id']
     title = norm_str(note_info['title'])
@@ -267,6 +293,8 @@ def download_note(note_info, path, save_choice):
         return path
     if save_choice == 'video-flat' and note_type == '视频':
         download_media(path, note_id, note_info['video_addr'], 'video')
+        if transcode:
+            transcode_to_h264(f"{path}/{note_id}.mp4")
         return path
 
     save_path = f'{path}/{nickname}_{user_id}/{title}_{note_id}'
@@ -280,6 +308,8 @@ def download_note(note_info, path, save_choice):
     elif note_type == '视频' and save_choice in ['media', 'media-video', 'all']:
         download_media(save_path, 'cover', note_info['video_cover'], 'image')
         download_media(save_path, 'video', note_info['video_addr'], 'video')
+        if transcode:
+            transcode_to_h264(f"{save_path}/video.mp4")
     return save_path
 
 
