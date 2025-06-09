@@ -14,23 +14,25 @@ try:
 except:
     xray_js = execjs.compile(open(r'static/xhs_xray.js', 'r', encoding='utf-8').read())
 
-def generate_x_b3_traceid(len=16):
-    x_b3_traceid = ""
-    for t in range(len):
-        x_b3_traceid += "abcdef0123456789"[math.floor(16 * random.random())]
-    return x_b3_traceid
+def generate_x_b3_traceid(length: int = 16) -> str:
+    """Generate a hexadecimal trace id."""
+    chars = "abcdef0123456789"
+    return "".join(random.choice(chars) for _ in range(length))
 
-def generate_xs_xs_common(a1, api, data=''):
+def generate_xs_xs_common(a1: str, api: str, data: str | dict | None = '') -> tuple[str, int, str]:
+    """Return X-s related headers using the bundled JavaScript implementation."""
     ret = js.call('get_request_headers_params', api, data, a1)
     xs, xt, xs_common = ret['xs'], ret['xt'], ret['xs_common']
     return xs, xt, xs_common
 
-def generate_xs(a1, api, data=''):
+def generate_xs(a1: str, api: str, data: str | dict | None = '') -> tuple[str, int]:
+    """Return X-s and X-t values using the JS algorithm."""
     ret = js.call('get_xs', api, data, a1)
     xs, xt = ret['X-s'], ret['X-t']
     return xs, xt
 
-def generate_xray_traceid():
+def generate_xray_traceid() -> str:
+    """Generate the X-Ray trace id using the bundled script."""
     return xray_js.call('traceId')
 def get_common_headers():
     return {
@@ -93,11 +95,10 @@ def generate_request_params(cookies_str, api, data=''):
     headers, data = generate_headers(a1, api, data)
     return headers, cookies, data
 
-def splice_str(api, params):
-    url = api + '?'
-    for key, value in params.items():
-        if value is None:
-            value = ''
-        url += key + '=' + value + '&'
-    return url[:-1]
+def splice_str(api: str, params: dict) -> str:
+    """Assemble a query string from parameters."""
+    query = "&".join(
+        f"{key}={'' if value is None else value}" for key, value in params.items()
+    )
+    return f"{api}?{query}"
 
