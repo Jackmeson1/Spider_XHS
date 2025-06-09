@@ -10,3 +10,4 @@ pytest-cov
 requests-mock
 respx
 freezegun
+typer
