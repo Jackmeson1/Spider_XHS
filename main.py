@@ -46,7 +46,7 @@ class Data_Spider():
             if note_info is not None and success:
                 note_list.append(note_info)
         for note_info in note_list:
-            if save_choice == 'all' or 'media' in save_choice:
+            if save_choice == 'all' or 'media' in save_choice or 'flat' in save_choice:
                 download_note(note_info, base_path['media'], save_choice)
         if save_choice == 'all' or save_choice == 'excel':
             file_path = os.path.abspath(os.path.join(base_path['excel'], f'{excel_name}.xlsx'))
@@ -121,7 +121,12 @@ if __name__ == '__main__':
     cookies_str, base_path = init()
     data_spider = Data_Spider()
     """
-        save_choice: all: 保存所有的信息, media: 保存视频和图片（media-video只下载视频, media-image只下载图片，media都下载）, excel: 保存到excel
+        save_choice 说明:
+        - all: 保存所有的信息
+        - media: 保存视频和图片（media-video只下载视频, media-image只下载图片，media都下载）
+        - image-flat: 图集直接保存在media路径下，文件名为<note_id>_<index>.jpg
+        - video-flat: 视频直接保存在media路径下，文件名为<note_id>.mp4
+        - excel: 仅保存到excel
         save_choice 为 excel 或者 all 时，excel_name 不能为空
     """
 
