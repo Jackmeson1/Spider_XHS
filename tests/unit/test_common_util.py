@@ -9,6 +9,7 @@ from xhs_utils.data_util import (
     retry_failed,
     download_media,
 )
+from freezegun import freeze_time
 from xhs_utils.cookie_util import trans_cookies
 from xhs_utils.xhs_util import generate_x_b3_traceid, splice_str
 
@@ -19,6 +20,7 @@ def test_norm_str():
     assert '/' not in cleaned and '*' not in cleaned and '\n' not in cleaned
 
 
+@freeze_time("2021-01-01")
 def test_timestamp_to_str():
     ts = 1609459200000  # 2021-01-01 00:00:00
     assert timestamp_to_str(ts) == "2021-01-01 00:00:00"
