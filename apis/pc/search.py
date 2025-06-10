@@ -11,10 +11,10 @@ SORT_MAP = {
     3: "comment_descending",
     4: "collect_descending",
 }
-NOTE_TYPE_MAP = {1: "视频笔记", 2: "普通笔记"}
-NOTE_TIME_MAP = {1: "一天内", 2: "一周内", 3: "半年内"}
-NOTE_RANGE_MAP = {1: "已看过", 2: "未看过", 3: "已关注"}
-POS_DISTANCE_MAP = {1: "同城", 2: "附近"}
+NOTE_TYPE_MAP = {1: "video_note", 2: "normal_note"}
+NOTE_TIME_MAP = {1: "one_day", 2: "one_week", 3: "half_year"}
+NOTE_RANGE_MAP = {1: "viewed", 2: "unviewed", 3: "followed"}
+POS_DISTANCE_MAP = {1: "same_city", 2: "nearby"}
 
 
 def _build_filters(
@@ -22,10 +22,10 @@ def _build_filters(
 ) -> List[Dict[str, Any]]:
     return [
         {"tags": [SORT_MAP.get(sort_choice, "general")], "type": "sort_type"},
-        {"tags": [NOTE_TYPE_MAP.get(note_type, "不限")], "type": "filter_note_type"},
-        {"tags": [NOTE_TIME_MAP.get(note_time, "不限")], "type": "filter_note_time"},
-        {"tags": [NOTE_RANGE_MAP.get(note_range, "不限")], "type": "filter_note_range"},
-        {"tags": [POS_DISTANCE_MAP.get(pos_distance, "不限")], "type": "filter_pos_distance"},
+        {"tags": [NOTE_TYPE_MAP.get(note_type, "all")], "type": "filter_note_type"},
+        {"tags": [NOTE_TIME_MAP.get(note_time, "all")], "type": "filter_note_time"},
+        {"tags": [NOTE_RANGE_MAP.get(note_range, "all")], "type": "filter_note_range"},
+        {"tags": [POS_DISTANCE_MAP.get(pos_distance, "all")], "type": "filter_pos_distance"},
     ]
 
 

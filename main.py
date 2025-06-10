@@ -20,12 +20,7 @@ class Data_Spider():
         self.xhs_apis = XHS_Apis()
 
     def spider_note(self, note_url: str, cookies_str: str, proxies=None):
-        """
-        爬取一个笔记的信息
-        :param note_url:
-        :param cookies_str:
-        :return:
-        """
+        """Crawl information for a single note."""
         note_info = None
         try:
             success, msg, note_info = self.xhs_apis.get_note_info(note_url, cookies_str, proxies)
@@ -36,19 +31,22 @@ class Data_Spider():
         except Exception as e:
             success = False
             msg = e
-        logger.info(f'爬取笔记信息 {note_url}: {success}, msg: {msg}')
+        logger.info(f'Crawled note info {note_url}: {success}, msg: {msg}')
         return success, msg, note_info
 
-    def spider_some_note(self, notes: list, cookies_str: str, base_path: dict, save_choice: str, excel_name: str = '', proxies=None, transcode: bool = False):
-        """
-        爬取一些笔记的信息
-        :param notes:
-        :param cookies_str:
-        :param base_path:
-        :return:
-        """
+    def spider_some_note(
+        self,
+        notes: list,
+        cookies_str: str,
+        base_path: dict,
+        save_choice: str,
+        excel_name: str = '',
+        proxies=None,
+        transcode: bool = False,
+    ):
+        """Crawl a batch of notes."""
         if (save_choice == 'all' or save_choice == 'excel') and excel_name == '':
-            raise ValueError('excel_name 不能为空')
+            raise ValueError('excel_name cannot be empty')
         note_list = []
         for note_url in tqdm(notes, desc="notes"):
             success, msg, note_info = self.spider_note(note_url, cookies_str, proxies)
@@ -64,19 +62,22 @@ class Data_Spider():
         save_failed(failed)
 
 
-    def spider_user_all_note(self, user_url: str, cookies_str: str, base_path: dict, save_choice: str, excel_name: str = '', proxies=None, transcode: bool = False):
-        """
-        爬取一个用户的所有笔记
-        :param user_url:
-        :param cookies_str:
-        :param base_path:
-        :return:
-        """
+    def spider_user_all_note(
+        self,
+        user_url: str,
+        cookies_str: str,
+        base_path: dict,
+        save_choice: str,
+        excel_name: str = '',
+        proxies=None,
+        transcode: bool = False,
+    ):
+        """Crawl all notes posted by a user."""
         note_list = []
         try:
             success, msg, all_note_info = self.xhs_apis.get_user_all_notes(user_url, cookies_str, proxies)
             if success:
-                logger.info(f'用户 {user_url} 作品数量: {len(all_note_info)}')
+                logger.info(f'User {user_url} has {len(all_note_info)} notes')
                 for simple_note_info in tqdm(all_note_info, desc="notes"):
                     note_url = f"https://www.xiaohongshu.com/explore/{simple_note_info['note_id']}?xsec_token={simple_note_info['xsec_token']}"
                     note_list.append(note_url)
@@ -86,29 +87,45 @@ class Data_Spider():
         except Exception as e:
             success = False
             msg = e
-        logger.info(f'爬取用户所有视频 {user_url}: {success}, msg: {msg}')
+        logger.info(f'Crawled all notes for {user_url}: {success}, msg: {msg}')
         return note_list, success, msg
 
-    def spider_some_search_note(self, query: str, require_num: int, cookies_str: str, base_path: dict, save_choice: str, sort_type_choice=0, note_type=0, note_time=0, note_range=0, pos_distance=0, geo: dict = None,  excel_name: str = '', proxies=None, transcode: bool = False):
-        """
-            指定数量搜索笔记，设置排序方式和笔记类型和笔记数量
-            :param query 搜索的关键词
-            :param require_num 搜索的数量
-            :param cookies_str 你的cookies
-            :param base_path 保存路径
-            :param sort_type_choice 排序方式 0 综合排序, 1 最新, 2 最多点赞, 3 最多评论, 4 最多收藏
-            :param note_type 笔记类型 0 不限, 1 视频笔记, 2 普通笔记
-            :param note_time 笔记时间 0 不限, 1 一天内, 2 一周内天, 3 半年内
-            :param note_range 笔记范围 0 不限, 1 已看过, 2 未看过, 3 已关注
-            :param pos_distance 位置距离 0 不限, 1 同城, 2 附近 指定这个必须要指定 geo
-            返回搜索的结果
+    def spider_some_search_note(
+        self,
+        query: str,
+        require_num: int,
+        cookies_str: str,
+        base_path: dict,
+        save_choice: str,
+        sort_type_choice=0,
+        note_type=0,
+        note_time=0,
+        note_range=0,
+        pos_distance=0,
+        geo: dict | None = None,
+        excel_name: str = '',
+        proxies=None,
+        transcode: bool = False,
+    ):
+        """Search and crawl a fixed number of notes.
+
+        :param query: keyword to search
+        :param require_num: number of notes to fetch
+        :param cookies_str: authentication cookies
+        :param base_path: output directories
+        :param sort_type_choice: 0 general, 1 newest, 2 most liked, 3 most commented, 4 most collected
+        :param note_type: 0 all, 1 video note, 2 normal note
+        :param note_time: 0 all, 1 within a day, 2 within a week, 3 within half a year
+        :param note_range: 0 all, 1 viewed, 2 not viewed, 3 followed
+        :param pos_distance: 0 all, 1 same city, 2 nearby (requires geo)
+        :return: list of note urls
         """
         note_list = []
         try:
             success, msg, notes = self.xhs_apis.search_some_note(query, require_num, cookies_str, sort_type_choice, note_type, note_time, note_range, pos_distance, geo, proxies)
             if success:
                 notes = list(filter(lambda x: x['model_type'] == "note", notes))
-                logger.info(f'搜索关键词 {query} 笔记数量: {len(notes)}')
+                logger.info(f'Search "{query}" found {len(notes)} notes')
                 for note in tqdm(notes, desc="notes"):
                     note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
                     note_list.append(note_url)
@@ -118,7 +135,7 @@ class Data_Spider():
         except Exception as e:
             success = False
             msg = e
-        logger.info(f'搜索关键词 {query} 笔记: {success}, msg: {msg}')
+        logger.info(f'Search "{query}" result: {success}, msg: {msg}')
         return note_list, success, msg
 
 def run_examples():
@@ -126,36 +143,38 @@ def run_examples():
     cookies_str, base_path = init()
     data_spider = Data_Spider()
     """
-        save_choice 说明:
-        - all: 保存所有的信息
-        - media: 保存视频和图片（media-video只下载视频, media-image只下载图片，media都下载）
-        - image-flat: 图集直接保存在media路径下，文件名为<note_id>_<index>.jpg
-        - video-flat: 视频直接保存在media路径下，文件名为<note_id>.mp4
-        - excel: 仅保存到excel
-        save_choice 为 excel 或者 all 时，excel_name 不能为空
+    Example options for ``save_choice``:
+    - ``all``: save Excel and all media
+    - ``media``: save both videos and images (``media-video`` only videos,
+      ``media-image`` only images)
+    - ``image-flat``: store images directly in the media folder as
+      ``<note_id>_<index>.jpg``
+    - ``video-flat``: store video directly in the media folder as
+      ``<note_id>.mp4``
+    - ``excel``: only save to Excel
+    ``excel_name`` must be provided when using ``excel`` or ``all``
     """
 
 
-    # 1 爬取列表的所有笔记信息 笔记链接 如下所示 注意此url会过期！
+    # 1 Crawl the notes from the list below (URLs expire quickly)
     notes = [
         r'https://www.xiaohongshu.com/explore/683fe17f0000000023017c6a?xsec_token=ABBr_cMzallQeLyKSRdPk9fwzA0torkbT_ubuQP1ayvKA=&xsec_source=pc_user',
     ]
     data_spider.spider_some_note(notes, cookies_str, base_path, 'all', 'test')
 
-    # 2 爬取用户的所有笔记信息 用户链接 如下所示 注意此url会过期！
+    # 2 Crawl all notes from a user (URL may expire)
     user_url = 'https://www.xiaohongshu.com/user/profile/64c3f392000000002b009e45?xsec_token=AB-GhAToFu07JwNk_AMICHnp7bSTjVz2beVIDBwSyPwvM=&xsec_source=pc_feed'
     data_spider.spider_user_all_note(user_url, cookies_str, base_path, 'all')
 
-    # 3 搜索指定关键词的笔记
-    query = "榴莲"
+    # 3 Search notes by keyword
+    query = "durian"
     query_num = 10
-    sort_type_choice = 0  # 0 综合排序, 1 最新, 2 最多点赞, 3 最多评论, 4 最多收藏
-    note_type = 0 # 0 不限, 1 视频笔记, 2 普通笔记
-    note_time = 0  # 0 不限, 1 一天内, 2 一周内天, 3 半年内
-    note_range = 0  # 0 不限, 1 已看过, 2 未看过, 3 已关注
-    pos_distance = 0  # 0 不限, 1 同城, 2 附近 指定这个1或2必须要指定 geo
+    sort_type_choice = 0  # 0 general, 1 newest, 2 most liked, 3 most commented, 4 most collected
+    note_type = 0  # 0 all, 1 video note, 2 normal note
+    note_time = 0  # 0 all, 1 within a day, 2 within a week, 3 within half a year
+    note_range = 0  # 0 all, 1 viewed, 2 not viewed, 3 followed
+    pos_distance = 0  # 0 all, 1 same city, 2 nearby (geo required when 1 or 2)
     # geo = {
-    #     # 经纬度
     #     "latitude": 39.9725,
     #     "longitude": 116.4207
     # }

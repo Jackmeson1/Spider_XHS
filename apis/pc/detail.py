@@ -235,7 +235,7 @@ class DetailAPI(BaseAPI):
     def get_note_no_water_video(note_id: str) -> Tuple[bool, str, Any]:
         """Get video URL without watermark"""
         success = True
-        msg = "成功"
+        msg = "ok"
         video_addr = None
         try:
             headers = get_common_headers()
@@ -251,7 +251,7 @@ class DetailAPI(BaseAPI):
     def get_note_no_water_img(img_url: str) -> Tuple[bool, str, Any]:
         """Get image URL without watermark"""
         success = True
-        msg = "成功"
+        msg = "ok"
         new_url = None
         try:
             if ".jpg" in img_url:

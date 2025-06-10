@@ -9,11 +9,11 @@ class XHS_Creator_Apis():
         self.base_url = "https://creator.xiaohongshu.com"
 
 
-    # page: 页数
-    # time: 最近几天的时间
+    # page: page number
+    # time: data within the last few days
     def get_publish_note_info(self, page, cookies_str):
         success = False
-        msg = '成功'
+        msg = 'ok'
         res_json = None
         try:
             api = "/api/galaxy/creator/note/user/posted"
@@ -35,7 +35,7 @@ class XHS_Creator_Apis():
         return success, msg, res_json
 
 
-    # 获取全部的发布信息
+    # Get all published notes
     def get_all_publish_note_info(self, cookies_str):
         page = None
         notes = []
@@ -48,7 +48,7 @@ class XHS_Creator_Apis():
             page = res_json['data']['page']
             if page == -1:
                 break
-        return True, '成功', notes
+        return True, 'ok', notes
 
 
 if __name__ == '__main__':
