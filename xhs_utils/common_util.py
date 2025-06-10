@@ -13,7 +13,7 @@ def init():
     for base_path in [media_base_path, excel_base_path]:
         if not os.path.exists(base_path):
             os.makedirs(base_path)
-            logger.info(f'创建目录 {base_path}')
+            logger.info(f'Created directory {base_path}')
     cookies_str = load_env()
     base_path = {
         'media': media_base_path,

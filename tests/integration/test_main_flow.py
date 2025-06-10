@@ -41,4 +41,4 @@ def test_spider_note(monkeypatch):
     success, msg, info = spider.spider_note("http://x.com/n1", "c")
     assert success
     assert info["note_id"] == "n1"
-    assert info["note_type"] == "图集"
+    assert info["note_type"] == "image_collection"

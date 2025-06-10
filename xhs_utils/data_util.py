@@ -37,11 +37,11 @@ def handle_user_info(data, user_id):
     red_id = data['basic_info']['red_id']
     gender = data['basic_info']['gender']
     if gender == 0:
-        gender = '男'
+        gender = 'male'
     elif gender == 1:
-        gender = '女'
+        gender = 'female'
     else:
-        gender = '未知'
+        gender = 'unknown'
     ip_location = data['basic_info']['ip_location']
     desc = data['basic_info']['desc']
     follows = data['interactions'][0]['count']
@@ -74,16 +74,16 @@ def handle_note_info(data):
     note_url = data['url']
     note_type = data['note_card']['type']
     if note_type == 'normal':
-        note_type = '图集'
+        note_type = 'image_collection'
     else:
-        note_type = '视频'
+        note_type = 'video'
     user_id = data['note_card']['user']['user_id']
     home_url = f'https://www.xiaohongshu.com/user/profile/{user_id}'
     nickname = data['note_card']['user']['nickname']
     avatar = data['note_card']['user']['avatar']
     title = data['note_card']['title']
     if title.strip() == '':
-        title = f'无标题'
+        title = 'Untitled'
     desc = data['note_card']['desc']
     liked_count = data['note_card']['interact_info']['liked_count']
     collected_count = data['note_card']['interact_info']['collected_count']
@@ -98,7 +98,7 @@ def handle_note_info(data):
             # image_list.append(img_url)
         except:
             pass
-    if note_type == '视频':
+    if note_type == 'video':
         video_cover = image_list[0]
         video_addr = f"https://sns-video-bd.xhscdn.com/{data['note_card']['video']['consumer']['origin_video_key']}"
         # success, msg, video_addr = XHS_Apis.get_note_no_water_video(note_id)
@@ -116,7 +116,7 @@ def handle_note_info(data):
     if 'ip_location' in data['note_card']:
         ip_location = data['note_card']['ip_location']
     else:
-        ip_location = '未知'
+        ip_location = 'unknown'
     return {
         'note_id': note_id,
         'note_url': note_url,
@@ -153,8 +153,8 @@ def handle_comment_info(data):
     upload_time = timestamp_to_str(data['create_time'])
     try:
         ip_location = data['ip_location']
-    except:
-        ip_location = '未知'
+    except Exception:
+        ip_location = 'unknown'
     pictures = []
     try:
         pictures_temp = data['pictures']
@@ -186,17 +186,30 @@ def save_to_xlsx(datas, file_path, type='note'):
     wb = openpyxl.Workbook()
     ws = wb.active
     if type == 'note':
-        headers = ['笔记id', '笔记url', '笔记类型', '用户id', '用户主页url', '昵称', '头像url', '标题', '描述', '点赞数量', '收藏数量', '评论数量', '分享数量', '视频封面url', '视频地址url', '图片地址url列表', '标签', '上传时间', 'ip归属地']
+        headers = [
+            'note_id', 'note_url', 'note_type', 'user_id', 'user_home_url',
+            'nickname', 'avatar_url', 'title', 'desc', 'like_count', 'collect_count',
+            'comment_count', 'share_count', 'video_cover_url', 'video_url',
+            'image_urls', 'tags', 'upload_time', 'ip_location'
+        ]
     elif type == 'user':
-        headers = ['用户id', '用户主页url', '用户名', '头像url', '小红书号', '性别', 'ip地址', '介绍', '关注数量', '粉丝数量', '作品被赞和收藏数量', '标签']
+        headers = [
+            'user_id', 'home_url', 'nickname', 'avatar_url', 'red_id', 'gender',
+            'ip_location', 'desc', 'follow_count', 'fan_count',
+            'interaction_count', 'tags'
+        ]
     else:
-        headers = ['笔记id', '笔记url', '评论id', '用户id', '用户主页url', '昵称', '头像url', '评论内容', '评论标签', '点赞数量', '上传时间', 'ip归属地', '图片地址url列表']
+        headers = [
+            'note_id', 'note_url', 'comment_id', 'user_id', 'user_home_url',
+            'nickname', 'avatar_url', 'content', 'comment_tags', 'like_count',
+            'upload_time', 'ip_location', 'image_urls'
+        ]
     ws.append(headers)
     for data in datas:
         data = {k: norm_text(str(v)) for k, v in data.items()}
         ws.append(list(data.values()))
     wb.save(file_path)
-    logger.info(f'数据保存至 {file_path}')
+    logger.info(f'Data saved to {file_path}')
 
 def download_media(path: str, name: str, url: str, type: str, failed: list | None = None) -> bool:
     """Download an image or video file. Return True on success."""
@@ -245,42 +258,42 @@ def transcode_to_h264(path: str) -> bool:
 
 def save_user_detail(user, path):
     with open(f'{path}/detail.txt', mode="w", encoding="utf-8") as f:
-        # 逐行输出到txt里
-        f.write(f"用户id: {user['user_id']}\n")
-        f.write(f"用户主页url: {user['home_url']}\n")
-        f.write(f"用户名: {user['nickname']}\n")
-        f.write(f"头像url: {user['avatar']}\n")
-        f.write(f"小红书号: {user['red_id']}\n")
-        f.write(f"性别: {user['gender']}\n")
-        f.write(f"ip地址: {user['ip_location']}\n")
-        f.write(f"介绍: {user['desc']}\n")
-        f.write(f"关注数量: {user['follows']}\n")
-        f.write(f"粉丝数量: {user['fans']}\n")
-        f.write(f"作品被赞和收藏数量: {user['interaction']}\n")
-        f.write(f"标签: {user['tags']}\n")
+        # write details line by line
+        f.write(f"user_id: {user['user_id']}\n")
+        f.write(f"home_url: {user['home_url']}\n")
+        f.write(f"nickname: {user['nickname']}\n")
+        f.write(f"avatar_url: {user['avatar']}\n")
+        f.write(f"red_id: {user['red_id']}\n")
+        f.write(f"gender: {user['gender']}\n")
+        f.write(f"ip_location: {user['ip_location']}\n")
+        f.write(f"desc: {user['desc']}\n")
+        f.write(f"follows: {user['follows']}\n")
+        f.write(f"fans: {user['fans']}\n")
+        f.write(f"interaction: {user['interaction']}\n")
+        f.write(f"tags: {user['tags']}\n")
 
 def save_note_detail(note, path):
     with open(f'{path}/detail.txt', mode="w", encoding="utf-8") as f:
-        # 逐行输出到txt里
-        f.write(f"笔记id: {note['note_id']}\n")
-        f.write(f"笔记url: {note['note_url']}\n")
-        f.write(f"笔记类型: {note['note_type']}\n")
-        f.write(f"用户id: {note['user_id']}\n")
-        f.write(f"用户主页url: {note['home_url']}\n")
-        f.write(f"昵称: {note['nickname']}\n")
-        f.write(f"头像url: {note['avatar']}\n")
-        f.write(f"标题: {note['title']}\n")
-        f.write(f"描述: {note['desc']}\n")
-        f.write(f"点赞数量: {note['liked_count']}\n")
-        f.write(f"收藏数量: {note['collected_count']}\n")
-        f.write(f"评论数量: {note['comment_count']}\n")
-        f.write(f"分享数量: {note['share_count']}\n")
-        f.write(f"视频封面url: {note['video_cover']}\n")
-        f.write(f"视频地址url: {note['video_addr']}\n")
-        f.write(f"图片地址url列表: {note['image_list']}\n")
-        f.write(f"标签: {note['tags']}\n")
-        f.write(f"上传时间: {note['upload_time']}\n")
-        f.write(f"ip归属地: {note['ip_location']}\n")
+        # write details line by line
+        f.write(f"note_id: {note['note_id']}\n")
+        f.write(f"note_url: {note['note_url']}\n")
+        f.write(f"note_type: {note['note_type']}\n")
+        f.write(f"user_id: {note['user_id']}\n")
+        f.write(f"home_url: {note['home_url']}\n")
+        f.write(f"nickname: {note['nickname']}\n")
+        f.write(f"avatar_url: {note['avatar']}\n")
+        f.write(f"title: {note['title']}\n")
+        f.write(f"desc: {note['desc']}\n")
+        f.write(f"liked_count: {note['liked_count']}\n")
+        f.write(f"collect_count: {note['collected_count']}\n")
+        f.write(f"comment_count: {note['comment_count']}\n")
+        f.write(f"share_count: {note['share_count']}\n")
+        f.write(f"video_cover: {note['video_cover']}\n")
+        f.write(f"video_url: {note['video_addr']}\n")
+        f.write(f"image_urls: {note['image_list']}\n")
+        f.write(f"tags: {note['tags']}\n")
+        f.write(f"upload_time: {note['upload_time']}\n")
+        f.write(f"ip_location: {note['ip_location']}\n")
 
 
 
@@ -291,11 +304,11 @@ def download_note(note_info, path, save_choice, transcode=False, failed: list | 
     title = norm_str(note_info['title'])
     nickname = norm_str(note_info['nickname'])
     if title.strip() == '':
-        title = f'无标题'
+        title = 'Untitled'
     note_type = note_info['note_type']
 
     # flat mode: directly store media under base path
-    if save_choice == 'image-flat' and note_type == '图集':
+    if save_choice == 'image-flat' and note_type == 'image_collection':
         with ThreadPoolExecutor(max_workers=4) as ex:
             futures = {
                 ex.submit(download_media, path, f"{note_id}_{idx}", url, 'image', failed): url
@@ -304,7 +317,7 @@ def download_note(note_info, path, save_choice, transcode=False, failed: list | 
             for _ in tqdm(as_completed(futures), total=len(futures), desc="images"):
                 pass
         return path
-    if save_choice == 'video-flat' and note_type == '视频':
+    if save_choice == 'video-flat' and note_type == 'video':
         download_media(path, note_id, note_info['video_addr'], 'video', failed)
         if transcode:
             transcode_to_h264(f"{path}/{note_id}.mp4")
@@ -315,7 +328,7 @@ def download_note(note_info, path, save_choice, transcode=False, failed: list | 
     with open(f'{save_path}/info.json', mode='w', encoding='utf-8') as f:
         f.write(json.dumps(note_info) + '\n')
     save_note_detail(note_info, save_path)
-    if note_type == '图集' and save_choice in ['media', 'media-image', 'all']:
+    if note_type == 'image_collection' and save_choice in ['media', 'media-image', 'all']:
         with ThreadPoolExecutor(max_workers=4) as ex:
             futures = {
                 ex.submit(download_media, save_path, f'image_{idx}', url, 'image', failed): url
@@ -323,7 +336,7 @@ def download_note(note_info, path, save_choice, transcode=False, failed: list | 
             }
             for _ in tqdm(as_completed(futures), total=len(futures), desc="images"):
                 pass
-    elif note_type == '视频' and save_choice in ['media', 'media-video', 'all']:
+    elif note_type == 'video' and save_choice in ['media', 'media-video', 'all']:
         download_media(save_path, 'cover', note_info['video_cover'], 'image', failed)
         download_media(save_path, 'video', note_info['video_addr'], 'video', failed)
         if transcode:
