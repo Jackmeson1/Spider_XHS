@@ -77,6 +77,7 @@ python main.py --help
 
 - **Python** 3.7 or higher
 - **Node.js** 18.0 or higher
+- **jsdom** (installed via `npm install`) for DOM emulation
 - **Operating System**: Windows, macOS, or Linux
 - **Memory**: 4GB RAM minimum (8GB recommended)
 - **Storage**: Varies based on media download requirements
@@ -218,6 +219,8 @@ python main.py \
   --rate-limit 2 \
   --retry 3
 ```
+
+`--rate-limit` sets the minimum number of seconds to wait between HTTP requests.
 
 ### Save Options Explained
 
