@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Tuple, List, Dict, Any
 import urllib
-import requests
 from xhs_utils.xhs_util import splice_str, generate_request_params
 from .base import BaseAPI
 
@@ -28,7 +27,7 @@ class CommentAPI(BaseAPI):
             }
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -82,7 +81,7 @@ class CommentAPI(BaseAPI):
             }
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -141,7 +140,7 @@ class CommentAPI(BaseAPI):
         try:
             api = "/api/sns/web/unread_count"
             headers, cookies, _ = generate_request_params(cookies_str, api)
-            response = requests.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -156,7 +155,7 @@ class CommentAPI(BaseAPI):
             params = {"num": "20", "cursor": cursor}
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -189,7 +188,7 @@ class CommentAPI(BaseAPI):
             params = {"num": "20", "cursor": cursor}
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -222,7 +221,7 @@ class CommentAPI(BaseAPI):
             params = {"num": "20", "cursor": cursor}
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
