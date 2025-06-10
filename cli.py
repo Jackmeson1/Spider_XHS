@@ -12,21 +12,29 @@ def version() -> None:
 @app.command()
 def crawl(
     cookie: str = typer.Option(..., help="Xiaohongshu cookie"),
-    note_id: str = typer.Option(..., help="Note ID to crawl"),
+    note_id: str = typer.Option(
+        None,
+        help="Note ID to crawl if --note-url is not provided (prefer passing the full note URL)",
+    ),
+    note_url: str = typer.Option(None, help="Full note URL to crawl (recommended)"),
     rate_limit: float = typer.Option(0.0, help="Delay between requests in seconds"),
 ):
     """Crawl a single note."""
     if not cookie.strip():
         raise typer.BadParameter("cookie cannot be empty")
-    if not note_id.strip() or len(note_id) > 64:
-        raise typer.BadParameter("note-id is invalid")
+
+    if note_url and note_url.strip():
+        target_url = note_url.strip()
+    else:
+        if not note_id or not note_id.strip() or len(note_id) > 64:
+            raise typer.BadParameter("note-id is invalid")
+        target_url = f"https://www.xiaohongshu.com/explore/{note_id.strip()}"
 
     _, base_path = init()
     spider = Data_Spider(rate_limit=rate_limit)
-    note_url = f"https://www.xiaohongshu.com/explore/{note_id}"
-    success, msg, info = spider.spider_note(note_url, cookie)
+    success, msg, info = spider.spider_note(target_url, cookie)
     if success:
-        typer.echo(f"Crawled {note_id} successfully")
+        typer.echo(f"Crawled {note_url or note_id} successfully")
     else:
         typer.echo(f"Failed: {msg}")
         raise typer.Exit(code=1)
