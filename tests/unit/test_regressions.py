@@ -63,3 +63,16 @@ def test_save_to_xlsx_creates_dir(tmp_path):
     file_path = tmp_path / 'newdir' / 'file.xlsx'
     save_to_xlsx([sample_note()], str(file_path))
     assert file_path.exists()
+
+
+def test_empty_items_returns_failure(monkeypatch):
+    spider = Data_Spider()
+
+    def fake_get(note_url, cookies_str, proxies=None):
+        return True, 'ok', {'data': {'items': []}}
+
+    monkeypatch.setattr(spider.xhs_apis, 'get_note_info', fake_get)
+    success, msg, info = spider.spider_note('http://x.com/n1', 'c')
+    assert not success
+    assert 'not found' in msg
+    assert info is None

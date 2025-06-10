@@ -37,9 +37,15 @@ class Data_Spider():
         try:
             success, msg, note_info = self.xhs_apis.get_note_info(note_url, cookies_str, proxies)
             if success:
-                note_info = note_info['data']['items'][0]
-                note_info['url'] = note_url
-                note_info = handle_note_info(note_info)
+                items = note_info.get('data', {}).get('items', [])
+                if not items:
+                    success = False
+                    msg = 'note not found or authentication failed'
+                    note_info = None
+                else:
+                    note_info = items[0]
+                    note_info['url'] = note_url
+                    note_info = handle_note_info(note_info)
         except Exception as e:
             success = False
             msg = e
