@@ -176,7 +176,12 @@ cp .env.example .env
 python cli.py --help
 
 # Crawl a specific note
-python cli.py crawl-note --note-id "64f5e8d9000000001e03c5b5"
+python cli.py crawl --note-id "64f5e8d9000000001e03c5b5"
+python cli.py crawl --note-url "https://www.xiaohongshu.com/explore/64f5e8d9000000001e03c5b5"
+
+# Specify an output directory and Excel file
+python cli.py crawl --note-id "64f5e8d9000000001e03c5b5" \
+  --output-dir ./out --save-choice excel --excel-name note_data
 
 # Search and download
 python cli.py search --query "travel tips" --count 20 --save-media
