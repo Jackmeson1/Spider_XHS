@@ -26,9 +26,11 @@ def norm_text(text):
 
 
 def timestamp_to_str(timestamp):
-    time_local = time.localtime(timestamp / 1000)
-    dt = time.strftime("%Y-%m-%d %H:%M:%S", time_local)
-    return dt
+    """Return UTC time string from millisecond timestamp."""
+    if timestamp < 0:
+        raise ValueError("timestamp must be non-negative")
+    time_utc = time.gmtime(timestamp / 1000)
+    return time.strftime("%Y-%m-%d %H:%M:%S", time_utc)
 
 def handle_user_info(data, user_id):
     home_url = f'https://www.xiaohongshu.com/user/profile/{user_id}'

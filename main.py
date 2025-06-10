@@ -105,13 +105,28 @@ class Data_Spider():
         """
         note_list = []
         try:
-            success, msg, notes = self.xhs_apis.search_some_note(query, require_num, cookies_str, sort_type_choice, note_type, note_time, note_range, pos_distance, geo, proxies)
+            success, msg, notes = self.xhs_apis.search_some_note(
+                query,
+                require_num,
+                cookies_str,
+                sort_type_choice,
+                note_type,
+                note_time,
+                note_range,
+                pos_distance,
+                geo,
+                proxies,
+            )
             if success:
                 notes = list(filter(lambda x: x['model_type'] == "note", notes))
-                logger.info(f'搜索关键词 {query} 笔记数量: {len(notes)}')
-                for note in tqdm(notes, desc="notes"):
-                    note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
-                    note_list.append(note_url)
+                if not notes:
+                    success = False
+                    msg = f'No results for "{query}"'
+                else:
+                    logger.info(f'搜索关键词 {query} 笔记数量: {len(notes)}')
+                    for note in tqdm(notes, desc="notes"):
+                        note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
+                        note_list.append(note_url)
             if save_choice == 'all' or save_choice == 'excel':
                 excel_name = query
             self.spider_some_note(note_list, cookies_str, base_path, save_choice, excel_name, proxies, transcode)
