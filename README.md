@@ -176,7 +176,7 @@ cp .env.example .env
 python cli.py --help
 
 # Crawl a specific note
-python cli.py crawl-note --note-id "64f5e8d9000000001e03c5b5"
+python cli.py crawl-note --note-id "64f5e8d9000000001e03c5b5" --output-dir ./downloads
 
 # Search and download
 python cli.py search --query "travel tips" --count 20 --save-media
@@ -212,6 +212,7 @@ python main.py \
   --num 50 \
   --save-choice all \
   --excel-name "makeup_data" \
+  --output-dir ./output \
   --transcode \
   --proxy "http://proxy.example.com:8080" \
   --rate-limit 2 \
@@ -219,6 +220,7 @@ python main.py \
 ```
 
 `--rate-limit` sets the minimum number of seconds to wait between HTTP requests.
+`--output-dir` changes where Excel files and media are stored.
 
 ### Save Options Explained
 
