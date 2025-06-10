@@ -183,6 +183,16 @@ def handle_comment_info(data):
         'pictures': pictures,
     }
 def save_to_xlsx(datas, file_path, type='note'):
+    """Save a list of dicts to an Excel workbook.
+
+    The directory is created if missing. If ``datas`` is empty, no file
+    will be written and ``False`` is returned.
+    """
+    if not datas:
+        logger.warning("No data to write to Excel; skipping file creation")
+        return False
+
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     wb = openpyxl.Workbook()
     ws = wb.active
     if type == 'note':

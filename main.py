@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import argparse
 from loguru import logger
 from apis.xhs_pc_apis import XHS_Apis
@@ -27,6 +28,11 @@ class Data_Spider():
         :return:
         """
         note_info = None
+        # basic url validation to provide helpful error messages
+        if not re.match(r"https?://", note_url):
+            msg = "Invalid note URL"
+            logger.error(f"{msg}: {note_url}")
+            return False, msg, None
         try:
             success, msg, note_info = self.xhs_apis.get_note_info(note_url, cookies_str, proxies)
             if success:
@@ -58,9 +64,11 @@ class Data_Spider():
         for note_info in tqdm(note_list, desc="download"):
             if save_choice == 'all' or 'media' in save_choice or 'flat' in save_choice:
                 download_note(note_info, base_path['media'], save_choice, transcode, failed)
-        if save_choice == 'all' or save_choice == 'excel':
+        if (save_choice == 'all' or save_choice == 'excel') and note_list:
             file_path = os.path.abspath(os.path.join(base_path['excel'], f'{excel_name}.xlsx'))
             save_to_xlsx(note_list, file_path)
+        elif save_choice in ('all', 'excel') and not note_list:
+            logger.error('No valid notes fetched; Excel file will not be created')
         save_failed(failed)
 
 
@@ -179,6 +187,9 @@ def cli():
     parser.add_argument("--retry-failed", action="store_true", help="retry failed downloads")
     args = parser.parse_args()
 
+    if args.save_choice in ("excel", "all") and not args.excel_name:
+        parser.exit(status=2, message="--excel-name is required when --save-choice is excel or all\n")
+
     cookies_str, base_path = init()
     spider = Data_Spider()
 
@@ -188,27 +199,32 @@ def cli():
             download_media(item["path"], item["name"], item["url"], item["type"])
         return
 
-    if args.notes:
-        spider.spider_some_note(args.notes, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
-    if args.user:
-        spider.spider_user_all_note(args.user, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
-    if args.query:
-        spider.spider_some_search_note(
-            args.query,
-            args.num,
-            cookies_str,
-            base_path,
-            args.save_choice,
-            args.sort,
-            args.note_type,
-            args.note_time,
-            args.note_range,
-            args.pos_distance,
-            geo=None,
-            excel_name=args.excel_name,
-            proxies=None,
-            transcode=args.transcode,
-        )
+    try:
+        if args.notes:
+            spider.spider_some_note(args.notes, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
+        if args.user:
+            spider.spider_user_all_note(args.user, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
+        if args.query:
+            spider.spider_some_search_note(
+                args.query,
+                args.num,
+                cookies_str,
+                base_path,
+                args.save_choice,
+                args.sort,
+                args.note_type,
+                args.note_time,
+                args.note_range,
+                args.pos_distance,
+                geo=None,
+                excel_name=args.excel_name,
+                proxies=None,
+                transcode=args.transcode,
+            )
+    except ValueError as e:
+        parser.exit(status=2, message=f"{e}\n")
+    except FileNotFoundError as e:
+        parser.exit(status=2, message=f"{e}\n")
 
 
 if __name__ == '__main__':
