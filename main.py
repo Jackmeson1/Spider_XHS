@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import argparse
 from loguru import logger
 from apis.xhs_pc_apis import XHS_Apis
@@ -16,8 +17,9 @@ from tqdm import tqdm
 
 
 class Data_Spider():
-    def __init__(self):
-        self.xhs_apis = XHS_Apis()
+    def __init__(self, rate_limit: float = 0.0):
+        """Initialize spider with optional request rate limiting."""
+        self.xhs_apis = XHS_Apis(rate_limit=rate_limit)
 
     def spider_note(self, note_url: str, cookies_str: str, proxies=None):
         """
@@ -27,6 +29,11 @@ class Data_Spider():
         :return:
         """
         note_info = None
+        # basic url validation to provide helpful error messages
+        if not re.match(r"https?://", note_url):
+            msg = "Invalid note URL"
+            logger.error(f"{msg}: {note_url}")
+            return False, msg, None
         try:
             success, msg, note_info = self.xhs_apis.get_note_info(note_url, cookies_str, proxies)
             if success:
@@ -58,9 +65,11 @@ class Data_Spider():
         for note_info in tqdm(note_list, desc="download"):
             if save_choice == 'all' or 'media' in save_choice or 'flat' in save_choice:
                 download_note(note_info, base_path['media'], save_choice, transcode, failed)
-        if save_choice == 'all' or save_choice == 'excel':
+        if (save_choice == 'all' or save_choice == 'excel') and note_list:
             file_path = os.path.abspath(os.path.join(base_path['excel'], f'{excel_name}.xlsx'))
             save_to_xlsx(note_list, file_path)
+        elif save_choice in ('all', 'excel') and not note_list:
+            logger.error('No valid notes fetched; Excel file will not be created')
         save_failed(failed)
 
 
@@ -105,13 +114,28 @@ class Data_Spider():
         """
         note_list = []
         try:
-            success, msg, notes = self.xhs_apis.search_some_note(query, require_num, cookies_str, sort_type_choice, note_type, note_time, note_range, pos_distance, geo, proxies)
+            success, msg, notes = self.xhs_apis.search_some_note(
+                query,
+                require_num,
+                cookies_str,
+                sort_type_choice,
+                note_type,
+                note_time,
+                note_range,
+                pos_distance,
+                geo,
+                proxies,
+            )
             if success:
                 notes = list(filter(lambda x: x['model_type'] == "note", notes))
-                logger.info(f'搜索关键词 {query} 笔记数量: {len(notes)}')
-                for note in tqdm(notes, desc="notes"):
-                    note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
-                    note_list.append(note_url)
+                if not notes:
+                    success = False
+                    msg = f'No results for "{query}"'
+                else:
+                    logger.info(f'搜索关键词 {query} 笔记数量: {len(notes)}')
+                    for note in tqdm(notes, desc="notes"):
+                        note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
+                        note_list.append(note_url)
             if save_choice == 'all' or save_choice == 'excel':
                 excel_name = query
             self.spider_some_note(note_list, cookies_str, base_path, save_choice, excel_name, proxies, transcode)
@@ -177,10 +201,16 @@ def cli():
     parser.add_argument("--pos-distance", type=int, default=0)
     parser.add_argument("--transcode", action="store_true")
     parser.add_argument("--retry-failed", action="store_true", help="retry failed downloads")
+    parser.add_argument("--rate-limit", type=float, default=0.0, help="delay between requests in seconds")
     args = parser.parse_args()
 
+    if args.save_choice in ("excel", "all") and not args.excel_name:
+        parser.exit(status=2, message="--excel-name is required when --save-choice is excel or all\n")
+
     cookies_str, base_path = init()
-    spider = Data_Spider()
+    if args.rate_limit < 0:
+        parser.error("--rate-limit must be non-negative")
+    spider = Data_Spider(rate_limit=args.rate_limit)
 
     if args.retry_failed:
         records = retry_failed("failed.txt")
@@ -188,27 +218,32 @@ def cli():
             download_media(item["path"], item["name"], item["url"], item["type"])
         return
 
-    if args.notes:
-        spider.spider_some_note(args.notes, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
-    if args.user:
-        spider.spider_user_all_note(args.user, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
-    if args.query:
-        spider.spider_some_search_note(
-            args.query,
-            args.num,
-            cookies_str,
-            base_path,
-            args.save_choice,
-            args.sort,
-            args.note_type,
-            args.note_time,
-            args.note_range,
-            args.pos_distance,
-            geo=None,
-            excel_name=args.excel_name,
-            proxies=None,
-            transcode=args.transcode,
-        )
+    try:
+        if args.notes:
+            spider.spider_some_note(args.notes, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
+        if args.user:
+            spider.spider_user_all_note(args.user, cookies_str, base_path, args.save_choice, args.excel_name, transcode=args.transcode)
+        if args.query:
+            spider.spider_some_search_note(
+                args.query,
+                args.num,
+                cookies_str,
+                base_path,
+                args.save_choice,
+                args.sort,
+                args.note_type,
+                args.note_time,
+                args.note_range,
+                args.pos_distance,
+                geo=None,
+                excel_name=args.excel_name,
+                proxies=None,
+                transcode=args.transcode,
+            )
+    except ValueError as e:
+        parser.exit(status=2, message=f"{e}\n")
+    except FileNotFoundError as e:
+        parser.exit(status=2, message=f"{e}\n")
 
 
 if __name__ == '__main__':

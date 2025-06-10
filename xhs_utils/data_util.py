@@ -26,9 +26,11 @@ def norm_text(text):
 
 
 def timestamp_to_str(timestamp):
-    time_local = time.localtime(timestamp / 1000)
-    dt = time.strftime("%Y-%m-%d %H:%M:%S", time_local)
-    return dt
+    """Return UTC time string from millisecond timestamp."""
+    if timestamp < 0:
+        raise ValueError("timestamp must be non-negative")
+    time_utc = time.gmtime(timestamp / 1000)
+    return time.strftime("%Y-%m-%d %H:%M:%S", time_utc)
 
 def handle_user_info(data, user_id):
     home_url = f'https://www.xiaohongshu.com/user/profile/{user_id}'
@@ -183,6 +185,16 @@ def handle_comment_info(data):
         'pictures': pictures,
     }
 def save_to_xlsx(datas, file_path, type='note'):
+    """Save a list of dicts to an Excel workbook.
+
+    The directory is created if missing. If ``datas`` is empty, no file
+    will be written and ``False`` is returned.
+    """
+    if not datas:
+        logger.warning("No data to write to Excel; skipping file creation")
+        return False
+
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     wb = openpyxl.Workbook()
     ws = wb.active
     if type == 'note':

@@ -1,5 +1,8 @@
 import sys, pathlib; sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 import requests_mock
+import os
+import time
+import pytest
 
 from xhs_utils.data_util import (
     norm_str,
@@ -31,6 +34,7 @@ def test_trans_cookies():
     assert cookies == {"a": "1", "b": "2"}
     cookies = trans_cookies("a=1;b=2")
     assert cookies == {"a": "1", "b": "2"}
+    assert trans_cookies("") == {}
 
 
 def test_generate_x_b3_traceid():
@@ -74,4 +78,17 @@ def test_download_media_video(tmp_path):
         result = download_media(str(tmp_path), "vid", url, "video")
     assert result
     assert (tmp_path / "vid.mp4").exists()
+
+
+def test_timestamp_negative():
+    with pytest.raises(ValueError):
+        timestamp_to_str(-1000)
+
+
+def test_timestamp_timezone_independent(monkeypatch):
+    monkeypatch.setenv("TZ", "Asia/Shanghai")
+    if hasattr(time, "tzset"):
+        time.tzset()
+    ts = 1609459200000  # 2021-01-01 00:00:00 UTC
+    assert timestamp_to_str(ts) == "2021-01-01 00:00:00"
 

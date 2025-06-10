@@ -1,5 +1,4 @@
 from typing import Tuple, List, Dict, Any
-import requests
 from xhs_utils.xhs_util import generate_request_params
 from .base import BaseAPI
 
@@ -11,7 +10,7 @@ class FeedAPI(BaseAPI):
         try:
             api = "/api/sns/web/v1/homefeed/category"
             headers, cookies, _ = generate_request_params(cookies_str, api)
-            response = requests.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -46,7 +45,7 @@ class FeedAPI(BaseAPI):
                 "need_filter_image": False,
             }
             headers, cookies, trans_data = generate_request_params(cookies_str, api, data)
-            response = requests.post(
+            response = self._post(
                 self.base_url + api,
                 headers=headers,
                 data=trans_data,

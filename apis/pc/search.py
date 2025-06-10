@@ -1,7 +1,6 @@
 from typing import Tuple, List, Dict, Any
 import json
 import urllib
-import requests
 from xhs_utils.xhs_util import splice_str, generate_request_params, generate_x_b3_traceid
 from .base import BaseAPI
 
@@ -38,7 +37,7 @@ class SearchAPI(BaseAPI):
             params = {"keyword": urllib.parse.quote(word)}
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -78,7 +77,7 @@ class SearchAPI(BaseAPI):
                 "image_formats": ["jpg", "webp", "avif"],
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
-            response = requests.post(
+            response = self._post(
                 self.base_url + api,
                 headers=headers,
                 data=data.encode("utf-8"),
@@ -134,6 +133,9 @@ class SearchAPI(BaseAPI):
             success, msg = False, str(e)
         if len(note_list) > require_num:
             note_list = note_list[:require_num]
+        if success and not note_list:
+            success = False
+            msg = f'No results for "{query}"'
         return success, msg, note_list
 
     def search_user(self, query: str, cookies_str: str, page: int = 1, proxies: Dict[str, str] | None = None) -> Tuple[bool, str, Any]:
@@ -152,7 +154,7 @@ class SearchAPI(BaseAPI):
                 }
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
-            response = requests.post(
+            response = self._post(
                 self.base_url + api,
                 headers=headers,
                 data=data.encode("utf-8"),
