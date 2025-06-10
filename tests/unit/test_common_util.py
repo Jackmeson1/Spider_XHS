@@ -31,6 +31,7 @@ def test_trans_cookies():
     assert cookies == {"a": "1", "b": "2"}
     cookies = trans_cookies("a=1;b=2")
     assert cookies == {"a": "1", "b": "2"}
+    assert trans_cookies("") == {}
 
 
 def test_generate_x_b3_traceid():

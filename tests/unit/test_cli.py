@@ -16,3 +16,9 @@ def test_cli_crawl(monkeypatch):
     monkeypatch.setattr(Data_Spider, "spider_note", fake_spider)
     result = runner.invoke(app, ["crawl", "--cookie", "c", "--note-id", "n1"])
     assert "Crawled n1 successfully" in result.stdout
+
+
+def test_cli_validation(monkeypatch):
+    result = runner.invoke(app, ["crawl", "--cookie", "", "--note-id", ""])
+    assert result.exit_code != 0
+    assert "note-id is invalid" in result.stderr or "cookie cannot be empty" in result.stderr
