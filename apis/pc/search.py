@@ -134,6 +134,9 @@ class SearchAPI(BaseAPI):
             success, msg = False, str(e)
         if len(note_list) > require_num:
             note_list = note_list[:require_num]
+        if success and not note_list:
+            success = False
+            msg = f'No results for "{query}"'
         return success, msg, note_list
 
     def search_user(self, query: str, cookies_str: str, page: int = 1, proxies: Dict[str, str] | None = None) -> Tuple[bool, str, Any]:
