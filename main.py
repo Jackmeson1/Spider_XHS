@@ -17,8 +17,9 @@ from tqdm import tqdm
 
 
 class Data_Spider():
-    def __init__(self):
-        self.xhs_apis = XHS_Apis()
+    def __init__(self, rate_limit: float = 0.0):
+        """Initialize spider with optional request rate limiting."""
+        self.xhs_apis = XHS_Apis(rate_limit=rate_limit)
 
     def spider_note(self, note_url: str, cookies_str: str, proxies=None):
         """
@@ -200,13 +201,16 @@ def cli():
     parser.add_argument("--pos-distance", type=int, default=0)
     parser.add_argument("--transcode", action="store_true")
     parser.add_argument("--retry-failed", action="store_true", help="retry failed downloads")
+    parser.add_argument("--rate-limit", type=float, default=0.0, help="delay between requests in seconds")
     args = parser.parse_args()
 
     if args.save_choice in ("excel", "all") and not args.excel_name:
         parser.exit(status=2, message="--excel-name is required when --save-choice is excel or all\n")
 
     cookies_str, base_path = init()
-    spider = Data_Spider()
+    if args.rate_limit < 0:
+        parser.error("--rate-limit must be non-negative")
+    spider = Data_Spider(rate_limit=args.rate_limit)
 
     if args.retry_failed:
         records = retry_failed("failed.txt")

@@ -1,7 +1,6 @@
 from typing import Tuple, List, Dict, Any
 import json
 import urllib
-import requests
 from xhs_utils.xhs_util import splice_str, generate_request_params, generate_x_b3_traceid
 from .base import BaseAPI
 
@@ -38,7 +37,7 @@ class SearchAPI(BaseAPI):
             params = {"keyword": urllib.parse.quote(word)}
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -78,7 +77,7 @@ class SearchAPI(BaseAPI):
                 "image_formats": ["jpg", "webp", "avif"],
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
-            response = requests.post(
+            response = self._post(
                 self.base_url + api,
                 headers=headers,
                 data=data.encode("utf-8"),
@@ -155,7 +154,7 @@ class SearchAPI(BaseAPI):
                 }
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
-            response = requests.post(
+            response = self._post(
                 self.base_url + api,
                 headers=headers,
                 data=data.encode("utf-8"),

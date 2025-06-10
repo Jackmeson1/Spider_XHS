@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Tuple, List, Dict, Any
 import urllib
 import re
-import requests
 from xhs_utils.xhs_util import splice_str, generate_request_params, get_common_headers
 from .base import BaseAPI
 
@@ -16,7 +15,7 @@ class DetailAPI(BaseAPI):
             params = {"target_user_id": user_id}
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -29,7 +28,7 @@ class DetailAPI(BaseAPI):
         try:
             api = "/api/sns/web/v1/user/selfinfo"
             headers, cookies, _ = generate_request_params(cookies_str, api)
-            response = requests.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -42,7 +41,7 @@ class DetailAPI(BaseAPI):
         try:
             api = "/api/sns/web/v2/user/me"
             headers, cookies, _ = generate_request_params(cookies_str, api)
-            response = requests.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -72,7 +71,7 @@ class DetailAPI(BaseAPI):
             }
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -125,7 +124,7 @@ class DetailAPI(BaseAPI):
             }
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -178,7 +177,7 @@ class DetailAPI(BaseAPI):
             }
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
+            response = self._get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -224,7 +223,7 @@ class DetailAPI(BaseAPI):
                 "xsec_token": kv_dist["xsec_token"],
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
-            response = requests.post(self.base_url + api, headers=headers, data=data, cookies=cookies, proxies=proxies)
+            response = self._post(self.base_url + api, headers=headers, data=data, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -240,7 +239,7 @@ class DetailAPI(BaseAPI):
         try:
             headers = get_common_headers()
             url = f"https://www.xiaohongshu.com/explore/{note_id}"
-            response = requests.get(url, headers=headers)
+            response = self._get(url, headers=headers)
             res = response.text
             video_addr = re.findall(r'<meta name="og:video" content="(.*?)">', res)[0]
         except Exception as e:
