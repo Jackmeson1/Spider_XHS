@@ -1,6 +1,15 @@
+import re
 import typer
 from main import Data_Spider
 from xhs_utils.common_util import init
+
+
+def validate_note_id(value: str) -> str:
+    """Validate note ID format."""
+    pattern = r"^[0-9a-f]{24}$"
+    if not value or not re.fullmatch(pattern, value.strip()):
+        raise typer.BadParameter("note-id is invalid")
+    return value
 
 app = typer.Typer(help="XHS Spider command line interface")
 
@@ -12,14 +21,12 @@ def version() -> None:
 @app.command()
 def crawl(
     cookie: str = typer.Option(..., help="Xiaohongshu cookie"),
-    note_id: str = typer.Option(..., help="Note ID to crawl"),
+    note_id: str = typer.Option(..., help="Note ID to crawl", callback=validate_note_id),
     rate_limit: float = typer.Option(0.0, help="Delay between requests in seconds"),
 ):
     """Crawl a single note."""
     if not cookie.strip():
         raise typer.BadParameter("cookie cannot be empty")
-    if not note_id.strip() or len(note_id) > 64:
-        raise typer.BadParameter("note-id is invalid")
 
     _, base_path = init()
     spider = Data_Spider(rate_limit=rate_limit)

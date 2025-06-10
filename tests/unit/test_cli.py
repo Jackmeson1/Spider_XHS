@@ -14,11 +14,24 @@ def test_cli_crawl(monkeypatch):
     def fake_spider(self, url, cookie, proxies=None):
         return True, "ok", {"id": "n1"}
     monkeypatch.setattr(Data_Spider, "spider_note", fake_spider)
-    result = runner.invoke(app, ["crawl", "--cookie", "c", "--note-id", "n1"])
-    assert "Crawled n1 successfully" in result.stdout
+    note_id = "a" * 24
+    result = runner.invoke(app, ["crawl", "--cookie", "c", "--note-id", note_id])
+    assert f"Crawled {note_id} successfully" in result.stdout
 
 
 def test_cli_validation(monkeypatch):
     result = runner.invoke(app, ["crawl", "--cookie", "", "--note-id", ""])
     assert result.exit_code != 0
     assert "note-id is invalid" in result.stderr or "cookie cannot be empty" in result.stderr
+
+
+def test_invalid_note_id_short(monkeypatch):
+    result = runner.invoke(app, ["crawl", "--cookie", "c", "--note-id", "abc"])
+    assert result.exit_code != 0
+    assert "note-id is invalid" in result.stderr
+
+
+def test_invalid_note_id_path(monkeypatch):
+    result = runner.invoke(app, ["crawl", "--cookie", "c", "--note-id", "../../etc/passwd"])
+    assert result.exit_code != 0
+    assert "note-id is invalid" in result.stderr
