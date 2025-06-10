@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 def load_env():
     load_dotenv()
-    cookies_str = os.getenv('COOKIES')
+    cookies_str = os.getenv('COOKIES') or os.getenv('XHS_COOKIE')
     return cookies_str
 
 def init():

@@ -136,13 +136,15 @@ npm install
 
 ### 3. Configuration
 
-```bash
-# Copy example configuration
-cp .env.example .env
+Create a `.env` file in the project root and provide your authentication
+cookie. The code reads the value from the `COOKIES` environment variable but
+`XHS_COOKIE` is also supported for compatibility.
 
-# Edit .env file with your settings
-# Required: XHS_COOKIE
-# Optional: PROXY_URL, OUTPUT_DIR, etc.
+```bash
+# .env
+COOKIES="your_cookie_value_here"
+# or
+XHS_COOKIE="your_cookie_value_here"
 ```
 
 ## 🔐 Authentication
@@ -235,7 +237,7 @@ Spider_XHS/
 ├── cli.py                  # Command-line interface
 ├── requirements.txt        # Python dependencies
 ├── package.json           # Node.js dependencies
-├── .env.example           # Configuration template
+├── .env                  # Environment variables
 ├── LICENSE                # MIT License
 ├── README.md              # This file
 ├── apis/                  # API modules
