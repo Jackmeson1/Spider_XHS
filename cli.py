@@ -1,3 +1,4 @@
+import os
 import typer
 from main import Data_Spider
 from xhs_utils.common_util import init
@@ -11,12 +12,16 @@ def version() -> None:
 
 @app.command()
 def crawl(
-    cookie: str = typer.Option(..., help="Xiaohongshu cookie"),
+    cookie: str | None = typer.Option(
+        None, help="Xiaohongshu cookie"
+    ),
     note_id: str = typer.Option(..., help="Note ID to crawl"),
     rate_limit: float = typer.Option(0.0, help="Delay between requests in seconds"),
 ):
     """Crawl a single note."""
-    if not cookie.strip():
+    if cookie is None:
+        cookie = os.getenv("COOKIES")
+    if not cookie or not cookie.strip():
         raise typer.BadParameter("cookie cannot be empty")
     if not note_id.strip() or len(note_id) > 64:
         raise typer.BadParameter("note-id is invalid")
