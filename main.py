@@ -1,6 +1,7 @@
 import json
 import os
 import argparse
+import time
 from loguru import logger
 from apis.xhs_pc_apis import XHS_Apis
 from xhs_utils.common_util import init
@@ -12,25 +13,49 @@ from xhs_utils.data_util import (
     retry_failed,
     download_media,
 )
+from xhs_utils.retry_util import retry_with_backoff, smart_delay
+from xhs_utils.error_handler import XHSAuthError, XHSRateLimitError, XHSNotFoundError
 from tqdm import tqdm
 
 
 class Data_Spider():
     def __init__(self):
         self.xhs_apis = XHS_Apis()
+        self.last_request_time = 0
 
+    @retry_with_backoff(max_retries=3, base_delay=2.0)
     def spider_note(self, note_url: str, cookies_str: str, proxies=None):
         """Crawl information for a single note."""
         note_info = None
         try:
-            success, msg, note_info = self.xhs_apis.get_note_info(note_url, cookies_str, proxies)
-            if success:
-                note_info = note_info['data']['items'][0]
+            # Add intelligent delay between requests
+            smart_delay(self.last_request_time, min_interval=2.0)
+            self.last_request_time = time.time()
+            
+            success, msg, response_data = self.xhs_apis.get_note_info(note_url, cookies_str, proxies)
+            if success and response_data:
+                if 'data' not in response_data or 'items' not in response_data['data']:
+                    raise ValueError(f"Invalid response structure: {response_data}")
+                
+                items = response_data['data']['items']
+                if not items:
+                    raise ValueError("No items found in response")
+                    
+                note_info = items[0]
                 note_info['url'] = note_url
                 note_info = handle_note_info(note_info)
+            else:
+                raise Exception(msg)
+                
+        except (XHSAuthError, XHSRateLimitError, XHSNotFoundError) as e:
+            success = False
+            msg = str(e)
+            logger.error(f'XHS error crawling note {note_url}: {e}')
         except Exception as e:
             success = False
-            msg = e
+            msg = str(e)
+            logger.error(f'Unexpected error crawling note {note_url}: {e}')
+            
         logger.info(f'Crawled note info {note_url}: {success}, msg: {msg}')
         return success, msg, note_info
 

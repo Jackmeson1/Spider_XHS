@@ -3,7 +3,9 @@ from typing import Tuple, List, Dict, Any
 import urllib
 import re
 import requests
+from loguru import logger
 from xhs_utils.xhs_util import splice_str, generate_request_params, get_common_headers
+from xhs_utils.error_handler import parse_response, log_request_details, XHSError
 from .base import BaseAPI
 
 
@@ -214,21 +216,39 @@ class DetailAPI(BaseAPI):
         try:
             url_parse = urllib.parse.urlparse(url)
             note_id = url_parse.path.split("/")[-1]
-            kv_dist = {kv.split("=")[0]: kv.split("=")[1] for kv in url_parse.query.split("&")}
+            
+            # Parse query parameters more safely
+            query_params = {}
+            if url_parse.query:
+                for kv in url_parse.query.split("&"):
+                    if "=" in kv:
+                        key, value = kv.split("=", 1)
+                        query_params[key] = value
+            
+            # Validate required xsec_token
+            if "xsec_token" not in query_params:
+                raise ValueError(f"Missing xsec_token in URL: {url}")
+            
             api = "/api/sns/web/v1/feed"
             data = {
                 "source_note_id": note_id,
                 "image_formats": ["jpg", "webp", "avif"],
                 "extra": {"need_body_topic": "1"},
-                "xsec_source": kv_dist.get("xsec_source", "pc_search"),
-                "xsec_token": kv_dist["xsec_token"],
+                "xsec_source": query_params.get("xsec_source", "pc_search"),
+                "xsec_token": query_params["xsec_token"],
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
+            
+            log_request_details("POST", self.base_url + api, headers, data)
             response = requests.post(self.base_url + api, headers=headers, data=data, cookies=cookies, proxies=proxies)
-            res_json = response.json()
-            success, msg = res_json["success"], res_json["msg"]
+            
+            success, msg, res_json = parse_response(response)
+        except XHSError as e:
+            logger.error(f"XHS API error in get_note_info: {e}")
+            success, msg, res_json = False, str(e), None
         except Exception as e:
-            success, msg = False, str(e)
+            logger.error(f"Unexpected error in get_note_info: {e}")
+            success, msg, res_json = False, f"Unexpected error: {str(e)}", None
         return success, msg, res_json
 
     @staticmethod

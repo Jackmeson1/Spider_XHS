@@ -2,7 +2,9 @@ from typing import Tuple, List, Dict, Any
 import json
 import urllib
 import requests
+from loguru import logger
 from xhs_utils.xhs_util import splice_str, generate_request_params, generate_x_b3_traceid
+from xhs_utils.error_handler import parse_response, log_request_details, XHSError
 from .base import BaseAPI
 
 SORT_MAP = {
@@ -38,11 +40,17 @@ class SearchAPI(BaseAPI):
             params = {"keyword": urllib.parse.quote(word)}
             splice_api = splice_str(api, params)
             headers, cookies, _ = generate_request_params(cookies_str, splice_api)
+            
+            log_request_details("GET", self.base_url + splice_api, headers)
             response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
-            res_json = response.json()
-            success, msg = res_json["success"], res_json["msg"]
+            
+            success, msg, res_json = parse_response(response)
+        except XHSError as e:
+            logger.error(f"XHS API error in get_search_keyword: {e}")
+            success, msg, res_json = False, str(e), None
         except Exception as e:
-            success, msg = False, str(e)
+            logger.error(f"Unexpected error in get_search_keyword: {e}")
+            success, msg, res_json = False, f"Unexpected error: {str(e)}", None
         return success, msg, res_json
 
     def search_note(
@@ -78,6 +86,8 @@ class SearchAPI(BaseAPI):
                 "image_formats": ["jpg", "webp", "avif"],
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
+            
+            log_request_details("POST", self.base_url + api, headers, data)
             response = requests.post(
                 self.base_url + api,
                 headers=headers,
@@ -85,10 +95,14 @@ class SearchAPI(BaseAPI):
                 cookies=cookies,
                 proxies=proxies,
             )
-            res_json = response.json()
-            success, msg = res_json["success"], res_json["msg"]
+            
+            success, msg, res_json = parse_response(response)
+        except XHSError as e:
+            logger.error(f"XHS API error in search_note: {e}")
+            success, msg, res_json = False, str(e), None
         except Exception as e:
-            success, msg = False, str(e)
+            logger.error(f"Unexpected error in search_note: {e}")
+            success, msg, res_json = False, f"Unexpected error: {str(e)}", None
         return success, msg, res_json
 
     def search_some_note(
