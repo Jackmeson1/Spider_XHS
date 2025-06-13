@@ -29,3 +29,38 @@ ENV/
 env.bak/
 venv.bak/
 
+# Test outputs and temporary files
+*_test_*/
+test_output/
+demo_output/
+output/
+cli_test_*/
+
+# Temporary scripts and debug files
+debug_*.py
+test_*.py
+simple_*.py
+*_temp.*
+
+# Generated configurations (except templates)
+*_config.yaml
+demo_*.yaml
+test_*.yaml
+!template_config.yaml
+
+# Large data files (keep small samples only)
+datas/excel_datas/*.xlsx
+datas/media_datas/*/*
+!datas/excel_datas/sample.xlsx
+!datas/media_datas/sample/
+
+# Logs and cache
+*.tmp
+.pytest_cache/
+.coverage
+
+# Environment files with sensitive data
+.env
+.env.local
+.env.production
+
